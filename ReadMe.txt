@@ -1,9 +1,12 @@
-LazyPlanner - Task Management Application for lazy people
+LazyPlanner - task management application for lazy people
 
 Based on Apache OFBiz and Sencha ExtJS 4
 
-Installation
+License: LGPL 2.1
 
-1. Put the application in ofbiz/hot-deploy folder (tested with ofbiz-release 13.07)
-2. Run: ant clean-all load-extseed start
-3. Goto https://localhost:8443/control/main and login with scrum/scrum
+Installation:
+1. Download Apache OFBiz (tested with ofbiz-release 13.07 https://github.com/apache/ofbiz/archive/release13.07.zip)
+2. Put LazyPlanner component in ofbiz/hot-deploy folder
+3. Install scrum project demo data: ant clean-all load-extseed
+4. Run OFBiz: ant start
+5. Goto localhost:8080 and login with user scrum and password scrum
