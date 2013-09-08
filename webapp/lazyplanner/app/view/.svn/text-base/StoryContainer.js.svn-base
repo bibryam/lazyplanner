@@ -1,0 +1,29 @@
+Ext.define('TodoBrowser.StoryContainer', {
+    extend: 'Ext.panel.Panel',
+    alias: 'widget.storyContainer',
+    id : 'storyContainer',
+    autoScroll : true,
+    border: false,
+    initComponent: function(){
+    	this.storyForm = Ext.create('widget.storyForm', {});
+    	this.commentInfo = Ext.create('widget.commentInfo', {});
+	    Ext.apply(this, {
+	    	 items: [this.storyForm, this.commentInfo]
+	    });
+        this.relayEvents(this.storyForm, ['storyCreate', 'storyLoad'])
+	    this.callParent(arguments);
+      },
+	  createStory: function() {
+		  this.commentInfo.disable();
+		  this.workEffortId = null;
+		  this.storyForm.createStory();
+		 // this.storyForm.expand();
+	  },
+	  loadStory: function(workEffortId) {
+		  this.commentInfo.enable();		  
+		  this.workEffortId = workEffortId;
+		  this.storyForm.loadStory(workEffortId);
+		  //this.storyForm.expand();
+		  this.commentInfo.onBeforeexpand()
+	  }
+});

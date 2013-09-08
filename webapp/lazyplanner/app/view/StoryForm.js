@@ -1,0 +1,237 @@
+/*
+ Copyright (C) Bilgin Ibryam http://www.ofbizian.com
+
+ This is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Lesser General Public License as published by
+ the Free Software Foundation, either version 2.1 of the License, or
+ (at your option) any later version.
+
+ Foobar is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU Lesser General Public License for more details.
+
+ You should have received a copy of the GNU Lesser General Public License
+ along with this software.  If not, see http://www.fsf.org
+ */
+Ext.define('TodoBrowser.StoryForm', {
+    extend: 'Ext.form.Panel',
+    alias: 'widget.storyForm',
+    border :false,
+    // bodyCls: 'gray-back-ground',
+    bodyStyle:'padding:10px', //parent controls it
+    title: 'Task Details',
+    id : 'storyForm',
+    autoScroll  : true,
+    fieldDefaults: {
+        labelAlign: 'top',
+        msgTarget: 'side'
+    },
+    
+    items: [{
+        xtype: 'container',
+        anchor: '100%',
+        layout:'column',
+        items:[{
+            xtype: 'container',
+            columnWidth:1,
+            layout: 'anchor',
+            items: [{
+                xtype:'textfield',
+                allowBlank: false,
+                fieldLabel: 'Title*',
+                emptyText: 'Short title for this task',
+                name: 'workEffortName',
+                anchor:'96%'
+            }]
+        },{
+            xtype: 'container',
+            width: 90,
+            //columnWidth:.2,
+            layout: 'anchor',
+            items: [{
+                xtype: 'datefield',
+                format : 'Y-m-d',
+                fieldLabel: 'Due Date',
+                name: 'estimatedCompletionDate',
+                anchor:'100%'
+            }]
+        }]
+    }, {
+        xtype: 'htmleditor',
+        name: 'description',
+        fieldLabel: 'Description',
+        height: 150,
+        anchor: '100%'
+    }, {
+        //xtype: 'container',
+    	xtype: 'fieldset',
+        title: 'Story Options',
+        collapsible: true,
+        anchor: '100%',
+        layout:'column',
+        items:[{
+            xtype: 'container',
+            columnWidth:.5,
+            layout: 'anchor',
+            items: [{
+                store: projectPartyStore,
+                value: currentPartyId,
+                allowBlank : false,
+				fieldLabel: 'Assign To',
+                anchor:'96%',
+				valueField:'id',
+				displayField:'name',
+		        name: 'currentPartyId',
+		        
+                xtype:'combo',
+                queryMode: 'local',
+		        typeAhead: false,					   
+ 				editable : true,
+ 				forceSelection : true,
+ 				allowBlank : true,
+ 				triggerAction : 'all'
+            },{
+                store: sprintStore,
+                value: backlogId,
+                allowBlank : false,
+				fieldLabel: 'Task List',
+                anchor:'96%',
+				valueField:'id',
+				displayField:'name',
+		        name: 'workEffortParentId',
+                xtype:'combo',
+                queryMode: 'local',
+		        typeAhead: false,					   
+ 				editable : true,
+ 				forceSelection : true,
+ 				triggerAction : 'all'
+            },{
+                store: relatedComponentStore,
+                allowBlank : false,
+				fieldLabel: 'Related to',
+                anchor:'96%',
+				valueField:'id',
+				displayField:'name',
+		        name: 'showAsEnumId',
+                value: 'UICOMPONENT',		        
+                xtype:'combo',
+                queryMode: 'local',
+		        typeAhead: false,					   
+ 				editable : true,
+ 				forceSelection : true,
+ 				triggerAction : 'all'
+            }]
+        },{
+            xtype: 'container',
+            columnWidth:.5,
+            layout: 'anchor',
+            items: [{
+                store: storyStatusStore,
+				fieldLabel: 'Status',
+                anchor:'100%',
+				valueField:'id',
+				displayField:'name',
+		        name: 'currentStatusId',
+                value: 'STORY_CREATED',		        
+                xtype:'combo',
+                queryMode: 'local',
+		        typeAhead: false,					   
+ 				editable : true,
+ 				forceSelection : true,
+ 				allowBlank : false,
+ 				triggerAction : 'all'
+            }, {
+            	store: storyTypeStore,
+                value: 'STORY_TASK',		                    	
+ 				fieldLabel: 'Type',
+                anchor:'100%',
+ 				valueField:'id',
+ 				displayField:'name',
+ 		        name: 'workEffortPurposeTypeId',
+                xtype:'combo',
+                queryMode: 'local',
+ 		        typeAhead: false,					   
+  				editable : true,
+  				forceSelection : true,
+  				allowBlank : false,
+  				triggerAction : 'all'
+            }, {
+            	store: priorityStore,
+ 				fieldLabel: 'Priority',
+                anchor:'100%',
+ 				valueField:'id',
+ 				displayField:'name',
+ 		        name: 'priority',
+                value: '3',		        
+                xtype:'combo',
+                queryMode: 'local',
+ 		        typeAhead: false,					   
+  				editable : true,
+  				forceSelection : true,
+  				allowBlank : false,
+  				triggerAction : 'all'
+            }]
+        }]
+    }],
+    
+    initComponent: function(){
+	    Ext.apply(this, {
+		url: createStory,
+        buttons: [{
+            text: 'Save',
+            scope: this,
+            handler: function() {
+            	Ext.getCmp('storyForm').getForm().submit({
+            		clientValidation: true,
+            		url: this.url,
+                    waitMsg: 'Submitting your data...',
+            	    params:this.extraParams,
+          		    success: function(form, action){
+          		    	form.reset();
+          		    	showMessage("Task added successfully");
+          		    	Ext.getCmp('storyForm').onStoryCreate(action.result.workEffort);
+        		    },
+        		    failure: function(form, action){
+        		    	extractAndShowError(action);
+        		    }
+        		});
+            }
+        },{
+            text: 'Cancel',
+        	handler: function(){
+        		Ext.getCmp('storyForm').getForm().reset();
+      	   }
+        }],
+      });
+	    this.callParent(arguments);
+      },
+      
+	  createStory: function() {
+		  this.url = createStory;
+		  this.extraParams = {};
+		  this.getForm().reset();
+	  },
+    
+      loadStory: function(workEffortId) {
+    	this.url = updateStory;
+    	this.extraParams = {workEffortId : workEffortId};
+        var storyDetailed = Ext.ModelManager.getModel('TodoBrowser.StoryDetailed');
+        storyDetailed.load(workEffortId, {
+            scope: this,
+            failure: function(record, operation) {
+            	showError("Error loading data.");
+            },
+            success: function(record, operation) {
+                this.fireEvent('storyLoad', record);
+                this.getForm().loadRecord(record);
+            },
+            callback: function(record, operation) {
+            }
+        });
+      },
+
+    onStoryCreate: function(workEffort) {
+        this.fireEvent('storyCreate', workEffort);
+    }
+});

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resource xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <property key="WorkEffortPurposeType.description.STORY_BUG">
+        <value xml:lang="en">Bug2</value>
+        <value xml:lang="tr">Asamblare</value>
+    </property>
+    <property key="WorkEffortPurposeType.description.STORY_NEW_FEATURE">
+        <value xml:lang="en">New Feature2</value>
+        <value xml:lang="tr">Assemblage</value>
+    </property>
+    <property key="WorkEffortPurposeType.description.STORY_TASK">
+        <value xml:lang="en">Task2</value>
+        <value xml:lang="tr">Assemblage</value>
+    </property>
+</resource>

@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+
+<screens xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+        xsi:noNamespaceSchemaLocation="http://ofbiz.apache.org/dtds/widget-screen.xsd">
+    
+    <screen name="NoDecorator">
+        <section>
+            <actions>
+                <property-map resource="CommonUiLabels" map-name="uiLabelMap" global="true"/>
+            </actions>
+            <widgets>
+                <decorator-section-include name="body"/>
+              </widgets>
+        </section>
+    </screen>
+
+    <screen name="SiteDecorator">
+        <section>
+            <actions>
+                <property-map resource="CommonUiLabels" map-name="uiLabelMap" global="true"/>
+            </actions>
+            <widgets>
+                <platform-specific><html><html-template location="component://lazybox/includes/site/siteHeader.ftl"/></html></platform-specific>
+                <decorator-section-include name="body"/>
+                <platform-specific><html><html-template location="component://lazybox/includes/site/siteFooter.ftl"/></html></platform-specific>                  
+            </widgets>
+        </section>
+    </screen>
+    
+    <screen name="SmallDecorator">
+        <section>
+            <actions>
+                <property-map resource="CommonUiLabels" map-name="uiLabelMap" global="true"/>
+            </actions>
+            <widgets>
+                <platform-specific><html><html-template location="component://lazybox/includes/site/smallHeader.ftl"/></html></platform-specific>
+                <decorator-section-include name="body"/>
+                <platform-specific><html><html-template location="component://lazybox/includes/site/smallFooter.ftl"/></html></platform-specific>                  
+            </widgets>
+        </section>
+    </screen>
+     
+    <screen name="SignupPage">
+        <section>       
+            <widgets>
+                <decorator-screen name="NoDecorator">
+                    <decorator-section name="body">
+                        <platform-specific><html><html-template location="component://lazybox/includes/site/signupPage.ftl"/></html></platform-specific>                     
+                    </decorator-section>
+                </decorator-screen>
+            </widgets>
+        </section>
+    </screen>
+
+    <screen name="ContactPage">
+        <section>       
+            <widgets>
+                <decorator-screen name="NoDecorator">
+                    <decorator-section name="body">
+                        <platform-specific><html><html-template location="component://lazybox/includes/site/contactusPage.ftl"/></html></platform-specific>                     
+                    </decorator-section>
+                </decorator-screen>
+            </widgets>
+        </section>
+    </screen>    
+    
+    <screen name="MessageScreen">
+        <section>       
+            <widgets>
+                <decorator-screen name="SiteDecorator">
+                    <decorator-section name="body">
+                        <platform-specific><html><html-template location="component://lazybox/includes/site/messageSscreen.ftl"/></html></platform-specific>                     
+                    </decorator-section>
+                </decorator-screen>
+            </widgets>
+        </section>
+    </screen>
+
+    <screen name="login">
+        <section>
+            <widgets>
+                <decorator-screen name="SmallDecorator">
+                    <decorator-section name="body">
+                        <platform-specific>
+                            <html><html-template location="component://lazybox/includes/site/login.ftl"/></html>
+                        </platform-specific>
+                    </decorator-section>
+                </decorator-screen>
+            </widgets>
+        </section>
+    </screen>
+
+    <screen name="forgotPassword">
+        <section>
+            <widgets>
+                <decorator-screen name="SmallDecorator">
+                    <decorator-section name="body">
+                        <platform-specific>
+                            <html><html-template location="component://lazybox/includes/site/forgotPassword.ftl"/></html>
+                        </platform-specific>
+                    </decorator-section>
+                </decorator-screen>
+            </widgets>
+        </section>
+    </screen>
+    
+</screens>

@@ -1,0 +1,6 @@
+<#assign nowTimestamp = Static["org.ofbiz.base.util.UtilDateTime"].nowTimestamp()>
+<div id="south" class="x-hide-display">
+    <p>Copyright &copy;${nowTimestamp?string("yyyy")} <a href="http://lazyplanner.com/" target="_blank"><strong>LazyPlanner.com</strong></a> All rights reserved.</p>
+</div>
+</body>
+</html>

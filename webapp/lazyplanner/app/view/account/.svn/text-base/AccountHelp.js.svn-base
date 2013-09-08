@@ -1,0 +1,78 @@
+Ext.define('TodoBrowser.AccountHelp', {
+    extend: 'Ext.tab.Panel',
+    alias: 'widget.accountHelp',
+    id : 'accountHelp',
+    activeTab: 0,
+    width: 600,
+    padding : 10,
+    frame:true,
+    border : false,
+    height: 250,
+    plain: true,
+    defaults :{
+        autoScroll: true,
+        bodyPadding: 10
+    },
+    items: [{
+   	 	title: 'Start',
+   	 	loader: {
+             url: 'accountHelp',
+             contentType: 'html',
+             autoLoad: true,
+             loadMask: true,
+             baseParams: {page: 'start'}
+   	 	}
+    },{
+   	 	title: 'Settings',
+   	 	loader: {
+             url: 'accountHelp',
+             contentType: 'html',
+             autoLoad: true,
+             loadMask: true,
+             baseParams: {page: 'settings'}
+   	 	}
+    },{
+    	title: 'Projects',
+   	 	loader: {
+             url: 'accountHelp',
+             contentType: 'html',
+             autoLoad: true,
+             loadMask: true,
+             baseParams: {page: 'projects'}
+   	 	}
+    },{
+    	title: 'Users',
+   	 	loader: {
+             url: 'accountHelp',
+             contentType: 'html',
+             autoLoad: true,
+             loadMask: true,
+             baseParams: {page: 'users'}
+   	 	}
+    },{
+    	title: 'Assigned Projects',
+   	 	loader: {
+             url: 'accountHelp',
+             contentType: 'html',
+             autoLoad: true,
+             loadMask: true,
+             baseParams: {page: 'assignedProjects'}
+   	 	}
+    }],
+    
+    loadSettings : function() {
+    	this.setActiveTab(1);
+	},
+	
+	loadAccount : function() {
+    	this.setActiveTab(2);
+	},
+	
+	loadUsers : function() {
+    	this.setActiveTab(3);
+	},
+	
+	loadAssignedProjects : function() {
+    	this.setActiveTab(4);
+	}
+});

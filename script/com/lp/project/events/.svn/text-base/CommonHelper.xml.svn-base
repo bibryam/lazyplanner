@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+
+<simple-methods xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:noNamespaceSchemaLocation="http://ofbiz.apache.org/dtds/simple-methods.xsd">
+ 
+   <simple-method method-name="findWEOfProject" short-description="Finds a story that belongs to a project">
+        <!-- expects: workEffortId and currentProjectId fields -->
+        <entity-one value-field="workEffort" entity-name="WorkEffort"/>
+        <if-not-empty field="workEffort">
+            <if-compare-field operator="equals" field="workEffort.projectId" to-field="currentProjectId">
+                <if-compare-field operator="equals" field="workEffort.workEffortTypeId" to-field="WEType">
+                    <set field="projectStory" from-field="workEffort"/>
+                </if-compare-field>
+            </if-compare-field>
+        </if-not-empty>
+    </simple-method>
+ 
+   <simple-method method-name="findWorkspaceProject" short-description="Finds a project that belongs to a workspace">
+        <!-- expects: projectId and workspaceId fields -->   
+        <entity-one value-field="workEffort" entity-name="WorkEffort">
+            <field-map field-name="workEffortId" from-field="projectId"/>
+        </entity-one>
+        <if-not-empty field="workEffort">
+            <if-compare-field operator="equals" field="workEffort.workEffortParentId" to-field="workspaceId">
+                <if-compare operator="equals" field="workEffort.workEffortTypeId" value="PROJECT">
+                    <set field="workspaceProject" from-field="workEffort"/>
+                </if-compare>
+            </if-compare-field>
+        </if-not-empty>
+    </simple-method>
+
+    <simple-method method-name="validateParameters" short-description="Checks for required parameters">
+        <!-- expects paramsToValidate list with param names -->
+        <if-not-empty field="paramsToValidate">
+            <iterate entry="param" list="paramsToValidate">
+                <if-empty field="parameters.${param}">
+                    <log level="always" message="Missing required parameter: ${param}"/>
+                    <add-error><fail-message message="Missing required parameter: ${param}"/></add-error>
+                    <check-errors/>
+                </if-empty>
+            </iterate>
+        </if-not-empty>
+    </simple-method>   
+
+    <simple-method method-name="validateWorkspaceMember" short-description="Checks if the party is workspace member">
+        <!-- expects partyId and session workspaceId -->
+        <set field="partyId" from-field="parameters.partyId"/>
+        <if-not-empty field="partyId">
+            <!-- validate that user belongs to workspace -->
+            <session-to-field field="workspaceId"/>
+            <entity-and list="workEffortPartyAssignments" entity-name="WorkEffortPartyAssignment" filter-by-date="true">
+                <field-map field-name="partyId" from-field="partyId"/>
+                <field-map field-name="workEffortId" from-field="workspaceId"/>
+                <field-map field-name="roleTypeId" value="WORKSPACE_MEMBER"/>                
+            </entity-and>
+            <if-not-empty field="workEffortPartyAssignments">
+                <first-from-list entry="workEffortPartyAssignment" list="workEffortPartyAssignments"/>
+                <set field="workspaceMember" from-field="workEffortPartyAssignment"/>
+                <else>
+                    <log level="always" message="User: ${partyId} don't belong to workspace: ${workspaceId}"/>
+                    <return response-code="error"/>
+                </else>
+            </if-not-empty>
+        </if-not-empty>
+    </simple-method>   
+</simple-methods>

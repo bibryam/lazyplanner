@@ -1,0 +1,45 @@
+Ext.define('TodoBrowser.FilterMenu', {
+    extend: 'Ext.menu.Menu',
+    alias: 'widget.filterMenu',
+    id : 'filterMenu',
+    initComponent: function(){
+        Ext.apply(this, {
+            items: [
+                    this.createFilterOption('currentStatusId', 'Task status', 'align-left', storyStatusStore),
+                    this.createFilterOption('workEffortPurposeTypeId', 'Task Type', 'align-right', storyTypeStore)]
+        });
+        this.callParent(arguments);
+    },
+    
+    createFilterOption: function(fieldName, fieldDescription, iconClass, itemStore) {
+    	var subMenu = Ext.create('Ext.menu.Menu', {});
+    	var def = subMenu.add({
+		      text: 'Any',
+              filterValue : '',
+		      checked: true,
+		      group: fieldName,
+		});
+		def.on('checkchange', this.onItemCheck, this);
+		itemStore.each(function(rec) {
+    		var added = subMenu.add({
+        	      text: rec.data.name,
+                  filterValue : rec.data.id,
+        	      checked: false,
+        	      group: fieldName,
+    		});
+    		added.on('checkchange', this.onItemCheck, this);
+    	}, this);
+    	var menuItem = Ext.create('Ext.menu.Item', {
+       	 	text: fieldDescription,
+       	 	iconCls : iconClass,
+       	 	menu: subMenu
+    	});
+        return menuItem;
+    },
+    
+    onItemCheck: function(item, checked) {
+    	if (checked) {
+        	this.fireEvent('filterSelect', item);    		
+    	}
+    }
+});

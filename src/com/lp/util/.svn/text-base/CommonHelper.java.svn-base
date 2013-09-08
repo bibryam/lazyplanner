@@ -1,0 +1,39 @@
+package com.lp.util;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import javolution.util.FastList;
+import org.ofbiz.base.util.UtilValidate;
+import org.ofbiz.entity.GenericValue;
+
+public class CommonHelper {
+
+    public static List<GenericValue> filterByDataType(List<GenericValue> userPreferences, String dataType) {
+        if (UtilValidate.isNotEmpty(dataType) && UtilValidate.isNotEmpty(userPreferences)) {
+            List<GenericValue> filteredPrefs = FastList.newInstance();
+            for(GenericValue userPreference : userPreferences) {
+                if (dataType.equals(userPreference.getString("workEffortId"))) {
+                    filteredPrefs.add(userPreference);
+                }
+            }
+            return filteredPrefs;
+        }
+        return Collections.emptyList();
+    }
+
+    public static String getBacklogId(List<GenericValue> workEfforts) {
+        if (UtilValidate.isNotEmpty(workEfforts)) {
+            for(GenericValue workEffort : workEfforts) {      
+                if ("BACKLOG".equals(workEffort.getString("workEffortPurposeTypeId"))) {
+                    return workEffort.getString("workEffortId");
+                }
+            }
+        }
+        return "";
+    }
+
+    public static List<String> StringToList(String...  values) {
+        return Arrays.asList(values);
+    }
+}

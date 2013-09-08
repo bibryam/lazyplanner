@@ -1,0 +1,50 @@
+Ext.define('TodoBrowser.CommentInfo', {
+    extend: 'Ext.panel.Panel',
+    alias: 'widget.commentInfo',
+    id : 'commentInfo',
+    border: false,
+    title: 'Task Comments',
+    iconCls: 'nav',
+    initComponent: function(){
+	    Ext.apply(this, {
+	    	items: [
+	            this.createGrid(),
+	            this.createForm()
+	            ],
+	        listeners: {
+                scope: this,
+                activate : this.onBeforeexpand
+            }
+	    });
+	    this.callParent(arguments);
+      },
+
+      createGrid: function(){
+          this.commentGrid = Ext.create('widget.commentGrid', {});
+          return this.commentGrid;
+      },
+
+      createForm: function(){
+          this.commentForm = Ext.create('widget.commentForm', {
+              border: false,
+          });
+          return this.commentForm;
+      },
+      
+      onCommentCreate: function(){
+    	  this.remove(this.commentGrid)
+    	  this.insert(0, this.createGrid())
+		  this.commentGrid.load(this.ownerCt.workEffortId);
+      },
+      
+      onBeforeexpand: function(){
+    	  this.onCommentCreate()
+    	  if (this.ownerCt.workEffortId) {
+    		  this.commentGrid.load(this.ownerCt.workEffortId);
+    		  this.commentForm.workEffortId = this.ownerCt.workEffortId;
+    	  } else {
+    		  alert('NO WE???');
+    		  return false;
+    	  }
+      }
+});

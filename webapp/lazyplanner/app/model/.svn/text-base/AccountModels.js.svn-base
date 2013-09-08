@@ -1,0 +1,55 @@
+Ext.define('TodoBrowser.WorkspaceDetailed', {
+    extend: 'Ext.data.Model',
+    fields: ['workEffortId', 'workEffortName', 'currentStatusId', 'description', 'workEffortTypeId', {name: 'id', mapping: 'workEffortId'},
+             {name: 'estimatedCompletionDate', mapping: 'estimatedCompletionDate', convert: dateConvert, format : 'Y-m-d', type: 'date'}],
+     proxy: {
+         type: 'ajax',
+         url : loadWorkspace,
+         reader: {
+             type: 'json',
+             root: 'workEffort'
+         }
+     }
+});
+
+Ext.define('TodoBrowser.ProjectDetailed', {
+    extend: 'Ext.data.Model',
+    fields: ['workEffortId', 'workEffortName', 'currentStatusId', 'description', 'workEffortTypeId', {name: 'id', mapping: 'workEffortId'},
+             {name: 'estimatedCompletionDate', mapping: 'estimatedCompletionDate', convert: dateConvert, format : 'Y-m-d', type: 'date'}],
+    proxy: {
+        type: 'ajax',
+        url : loadProject,
+        reader: {
+            type: 'json',
+            root: 'workEffort'
+        }
+    }
+});
+
+Ext.define('TodoBrowser.PersonDetailed', {
+    extend: 'Ext.data.Model',
+    fields: ['partyId', 'firstName', 'middleName', 'lastName', {name: 'id', mapping: 'partyId'}],
+    proxy: {
+        type: 'ajax',
+        url : loadPerson,
+        reader: {
+            type: 'json',
+            root: 'person'
+        }
+    }
+});
+
+Ext.define('TodoBrowser.UserAssigmentGrid', {
+    extend: 'Ext.data.Model',
+    fields: ['partyId', 'workEffortId', 'workEffortName', 'rt_Description', {name: 'id', mapping: 'workEffortId'}
+    ,{name: 'fromDate', mapping: 'fromDate', convert: dateConvert, format : 'Y-m-d', type: 'date'}
+	,{name: 'thruDate', mapping: 'thruDate', convert: dateConvert, format : 'Y-m-d', type: 'date'}],
+	proxy: {
+          type: 'ajax',
+          url: findUserAssigments,
+          reader: {
+              type: 'json',
+              root: 'userAssigments'
+          }
+      }
+});

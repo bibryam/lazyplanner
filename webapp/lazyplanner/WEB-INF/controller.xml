@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Copyright (C) Bilgin Ibryam http://www.ofbizian.com
+
+This is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation, either version 2.1 of the License, or
+(at your option) any later version.
+
+Foobar is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with this software.  If not, see http://www.fsf.org
+-->
+
+<site-conf xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+        xsi:noNamespaceSchemaLocation="http://ofbiz.apache.org/dtds/site-conf.xsd">
+    <include location="component://common/webcommon/WEB-INF/common-controller.xml"/>
+    <description>Lazy Planner Configuration</description>
+    <owner>Lazy Planner</owner>
+    
+    <after-login>
+        <event type="simple" invoke="initWorkspace" path="component://lazyplanner/script/com/lp/project/events/CommonEvents.xml"/>
+    </after-login>
+
+    <default-request request-uri="main"/>
+    
+    <request-map uri="main">
+        <security https="true" auth="true"/>
+        <response name="success" type="view" value="main"/>
+    </request-map>
+    
+    <request-map uri="account">
+        <security https="true" auth="true"/>
+        <response name="success" type="view" value="account"/>
+    </request-map>    
+
+    <request-map uri="workspace">
+        <security https="true" auth="true"/>
+        <event type="simple" invoke="setProjectAsPrefAndSession" path="component://lazyplanner/script/com/lp/project/events/ProjectEvents.xml"/>
+        <response name="projectSet" type="request-redirect-noparam" value="workspace"/>
+        <response name="success" type="view" value="workspace"/>
+    </request-map>
+
+    <request-map uri="ajaxCheckLogin" edit="false">
+        <description>Verify a user is logged in.</description>
+        <security https="true" auth="false"/>
+        <event type="java" path="org.ofbiz.webapp.control.LoginWorker" invoke="checkLogin"/>
+        <response name="success" type="view" value="main"/>
+        <response name="error" type="request" value="sessionTimeOut"/>
+    </request-map>
+    
+    <request-map uri="sessionTimeOut">
+        <security https="true" auth="false"/>    
+        <event type="simple" invoke="sessionTimeOut" path="component://lazyplanner/script/com/lp/project/events/ProjectEvents.xml"/>
+        <response name="success" type="request" value="json"/>
+        <response name="error" type="request" value="json"/>
+    </request-map>    
+    
+    <request-map uri="createProject">
+        <security https="true" auth="true"/>    
+        <event type="simple" invoke="createProject" path="component://lazyplanner/script/com/lp/project/events/ProjectEvents.xml"/>
+        <response name="success" type="request" value="json"/>
+        <response name="error" type="request" value="json"/>
+    </request-map>
+
+    <request-map uri="updateProject">
+        <security https="true" auth="true"/>    
+        <event type="simple" invoke="updateProject" path="component://lazyplanner/script/com/lp/project/events/ProjectEvents.xml"/>
+        <response name="success" type="request" value="json"/>
+        <response name="error" type="request" value="json"/>
+    </request-map>
+            
+    <request-map uri="findStories">
+        <security https="true" auth="true"/>    
+        <event type="simple" invoke="findStories" path="component://lazyplanner/script/com/lp/project/events/StoryEvents.xml"/>
+        <response name="success" type="request" value="json"/>
+        <response name="error" type="request" value="json"/>
+    </request-map>
+
+    <request-map uri="loadTree">
+        <security https="true" auth="true"/>    
+        <event type="simple" invoke="loadTree" path="component://lazyplanner/script/com/lp/project/events/StoryEvents.xml"/>
+        <response name="success" type="request" value="json"/>
+        <response name="error" type="request" value="json"/>
+    </request-map>    
+
+    <request-map uri="loadStory">
+        <security https="true" auth="true"/>    
+        <event type="simple" invoke="loadStory" path="component://lazyplanner/script/com/lp/project/events/StoryEvents.xml"/>
+        <response name="success" type="request" value="json"/>
+        <response name="error" type="request" value="json"/>
+    </request-map>    
+
+    <request-map uri="loadSprint">
+        <security https="true" auth="true"/>    
+        <event type="simple" invoke="loadSprint" path="component://lazyplanner/script/com/lp/project/events/StoryEvents.xml"/>
+        <response name="success" type="request" value="json"/>
+        <response name="error" type="request" value="json"/>
+    </request-map>    
+
+    <request-map uri="loadProject">
+        <security https="true" auth="true"/>    
+        <event type="simple" invoke="loadProject" path="component://lazyplanner/script/com/lp/project/events/ProjectEvents.xml"/>
+        <response name="success" type="request" value="json"/>
+        <response name="error" type="request" value="json"/>
+    </request-map>
+    
+    <request-map uri="loadWorkspace">
+        <security https="true" auth="true"/>    
+        <event type="simple" invoke="loadWorkspace" path="component://lazyplanner/script/com/lp/project/events/AccountEvents.xml"/>
+        <response name="success" type="request" value="json"/>
+        <response name="error" type="request" value="json"/>
+    </request-map>
+
+    <request-map uri="updateWorkspace">
+        <security https="true" auth="true"/>    
+        <event type="simple" invoke="updateWorkspace" path="component://lazyplanner/script/com/lp/project/events/AccountEvents.xml"/>
+        <response name="success" type="request" value="json"/>
+        <response name="error" type="request" value="json"/>
+    </request-map>        
+
+    <request-map uri="findUserAssigments">
+        <security https="true" auth="true"/>    
+        <event type="simple" invoke="findUserAssigments" path="component://lazyplanner/script/com/lp/project/events/ProjectEvents.xml"/>
+        <response name="success" type="request" value="json"/>
+        <response name="error" type="request" value="json"/>
+    </request-map>   
+
+    <request-map uri="assignWorkspaceUser">
+        <security https="true" auth="true"/>    
+        <event type="simple" invoke="assignWorkspaceUser" path="component://lazyplanner/script/com/lp/project/events/ProjectEvents.xml"/>
+        <response name="success" type="request" value="json"/>
+        <response name="error" type="request" value="json"/>
+    </request-map>   
+
+    <request-map uri="createUserAssigment">
+        <security https="true" auth="true"/>    
+        <event type="simple" invoke="createUserAssigment" path="component://lazyplanner/script/com/lp/project/events/ProjectEvents.xml"/>
+        <response name="success" type="request" value="json"/>
+        <response name="error" type="request" value="json"/>
+    </request-map>     
+    
+    <request-map uri="deleteUserAssigment">
+        <security https="true" auth="true"/>    
+        <event type="simple" invoke="deleteUserAssigment" path="component://lazyplanner/script/com/lp/project/events/ProjectEvents.xml"/>
+        <response name="success" type="request" value="json"/>
+        <response name="error" type="request" value="json"/>
+    </request-map>       
+    
+    <request-map uri="accountHelp">
+        <security https="true" auth="true"/>    
+        <response name="success" type="view" value="accountHelp"/>
+    </request-map>       
+    
+    <request-map uri="createStory">
+        <security https="true" auth="true"/>    
+        <event type="simple" invoke="createStory" path="component://lazyplanner/script/com/lp/project/events/StoryEvents.xml"/>
+        <response name="success" type="request" value="json"/>
+        <response name="error" type="request" value="json"/>
+    </request-map>
+
+    <request-map uri="updateStory">
+        <security https="true" auth="true"/>    
+        <event type="simple" invoke="updateStory" path="component://lazyplanner/script/com/lp/project/events/StoryEvents.xml"/>
+        <response name="success" type="request" value="json"/>
+        <response name="error" type="request" value="json"/>
+    </request-map>    
+
+    <request-map uri="loadComments">
+        <security https="true" auth="true"/>    
+        <event type="simple" invoke="loadComments" path="component://lazyplanner/script/com/lp/project/events/StoryEvents.xml"/>
+        <response name="success" type="request" value="json"/>
+        <response name="error" type="request" value="json"/>
+    </request-map>
+    
+    <request-map uri="createComment">
+        <security https="true" auth="true"/>    
+        <event type="simple" invoke="createComment" path="component://lazyplanner/script/com/lp/project/events/StoryEvents.xml"/>
+        <response name="success" type="request" value="json"/>
+        <response name="error" type="request" value="json"/>
+    </request-map>
+    
+    <request-map uri="createSprint">
+        <security https="true" auth="true"/>    
+        <event type="simple" invoke="createSprint" path="component://lazyplanner/script/com/lp/project/events/StoryEvents.xml"/>
+        <response name="success" type="request" value="json"/>
+        <response name="error" type="request" value="json"/>
+    </request-map>
+
+    <request-map uri="updateSprint">
+        <security https="true" auth="true"/>    
+        <event type="simple" invoke="updateSprint" path="component://lazyplanner/script/com/lp/project/events/StoryEvents.xml"/>
+        <response name="success" type="request" value="json"/>
+        <response name="error" type="request" value="json"/>
+    </request-map>    
+    
+    <request-map uri="changeStoryStatus">
+        <security https="true" auth="true"/>    
+        <event type="simple" invoke="changeStoryStatus" path="component://lazyplanner/script/com/lp/project/events/StoryEvents.xml"/>
+        <response name="success" type="request" value="json"/>
+        <response name="error" type="request" value="json"/>
+    </request-map>    
+
+    <request-map uri="updatePerson">
+        <security https="true" auth="true"/>    
+        <event type="simple" invoke="updatePerson" path="component://lazyplanner/script/com/lp/project/events/AccountEvents.xml"/>
+        <response name="success" type="request" value="json"/>
+        <response name="error" type="request" value="json"/>
+    </request-map>    
+
+    <request-map uri="loadPerson">
+        <security https="true" auth="true"/>    
+        <event type="simple" invoke="loadPerson" path="component://lazyplanner/script/com/lp/project/events/AccountEvents.xml"/>
+        <response name="success" type="request" value="json"/>
+        <response name="error" type="request" value="json"/>
+    </request-map>    
+
+    <request-map uri="updatePassword">
+        <security https="true" auth="true"/>    
+        <event type="simple" invoke="updatePassword" path="component://lazyplanner/script/com/lp/project/events/AccountEvents.xml"/>
+        <response name="success" type="request" value="json"/>
+        <response name="error" type="request" value="json"/>
+    </request-map>    
+
+    <view-map name="main" type="screen" page="component://lazyplanner/widget/ApplicationScreens.xml#Main"/>
+    <view-map name="account" type="screen" page="component://lazyplanner/widget/ApplicationScreens.xml#Account"/>
+    <view-map name="workspace" type="screen" page="component://lazyplanner/widget/ApplicationScreens.xml#Workspace"/>
+    <view-map name="accountHelp" type="screentext" page="component://lazyplanner/widget/ApplicationScreens.xml#AccountHelp"/>
+</site-conf>

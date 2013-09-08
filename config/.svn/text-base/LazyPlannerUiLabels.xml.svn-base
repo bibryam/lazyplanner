@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resource xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <property key="LPRegistrationSuccessful">
+        <value xml:lang="en">Your registration is successful. Please check your email and active your account. (If you can't find our confirmation email, check your spam folder, in case it is blocked.)</value>
+    </property>
+    <property key="LPMessageSentSuccessfully">
+        <value xml:lang="en">Your message is sent successfully.</value>
+    </property>    
+    <property key="LPAccountIsActivated">
+        <value xml:lang="en">Your account is activated now. You can sign in and start using Lazy Planner.</value>
+    </property>
+     <property key="LPPartyAssignmentError">
+        <value xml:lang="en">User is already assigned to this project</value>
+    </property>
+</resource>

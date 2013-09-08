@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+
+<entitymodel xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="http://ofbiz.apache.org/dtds/entitymodel.xsd">
+    <title>Entity of an Open For Business Project Component</title>
+    <description>None</description>
+    <copyright>Copyright 2001-2009 The Apache Software Foundation</copyright>
+    <author>None</author>
+    <version>1.0</version>
+
+  <extend-entity entity-name="WorkEffort">
+    <field name="projectId" type="id"/>
+    <field name="currentPartyId" type="id"/>    
+    <!--  <field name="description" type="very-long"/>     -->
+    <relation type="one" fk-name="WK_EFFRT_PROJECT" title="Project" rel-entity-name="WorkEffort">
+        <key-map field-name="projectId" rel-field-name="workEffortId"/>
+    </relation>
+    <relation type="one" fk-name="WK_EFFRT_PARTY" title="Party" rel-entity-name="Party">
+        <key-map field-name="currentPartyId" rel-field-name="partyId"/>
+    </relation>    
+  </extend-entity>
+  
+   <view-entity entity-name="WorkEffortPartyAssignmentDetails"
+            package-name="org.ofbiz.workeffort.workeffort"
+            title="WorkEffortPartyAssignment And Work Effort And Role Type">
+      <member-entity entity-alias="WEPA" entity-name="WorkEffortPartyAssignment"/>
+      <member-entity entity-alias="WE" entity-name="WorkEffort"/>
+      <member-entity entity-alias="RT" entity-name="RoleType"/>
+      <alias-all entity-alias="WEPA">
+        <exclude field="facilityId"/>
+      </alias-all>
+      <alias-all entity-alias="WE"/>
+      <alias-all entity-alias="RT" prefix="rt_"/>
+      <view-link entity-alias="WEPA" rel-entity-alias="WE">
+        <key-map field-name="workEffortId"/>
+      </view-link>
+      <view-link entity-alias="WEPA" rel-entity-alias="RT">
+        <key-map field-name="roleTypeId"/>
+      </view-link>
+    </view-entity>
+
+</entitymodel>

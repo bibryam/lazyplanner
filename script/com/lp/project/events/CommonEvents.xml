@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Copyright (C) Bilgin Ibryam http://www.ofbizian.com
+
+This is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation, either version 2.1 of the License, or
+(at your option) any later version.
+
+Foobar is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with this software.  If not, see http://www.fsf.org
+-->
+
+<simple-methods xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:noNamespaceSchemaLocation="http://ofbiz.apache.org/dtds/simple-methods.xsd">
+ 
+    <simple-method method-name="initWorkspace" short-description="Sets the default user data">
+        <set field="userLogin" from-field="parameters.userLogin"/>
+        <entity-and entity-name="WorkEffortAndPartyAssign" list="workEffortAndPartyAssigns">
+            <field-map field-name="partyId" from-field="userLogin.partyId"/>
+            <field-map field-name="workEffortTypeId" value="WORK_SPACE"/>
+            <field-map field-name="roleTypeId" value="WORKSPACE_OWNER"/>
+        </entity-and>
+        <first-from-list list="workEffortAndPartyAssigns" entry="workEffortAndPartyAssign"/>
+        <if-not-empty field="workEffortAndPartyAssign">
+            <log level="always" message="setting workspaceId: ${workEffortAndPartyAssign.workEffortId}"/>
+            <field-to-session field="workEffortAndPartyAssign.workEffortId" session-name="workspaceId"/>
+            <call-simple-method method-name="getDefaultProjectId"/>
+            <if-not-empty field="defaultProjectId">
+                <set field="currentProjectId" from-field="defaultProjectId"/>
+                <field-to-session field="currentProjectId"/>
+                <log level="always" message="Setting default project[${currentProjectId}] for user: [${userLogin.userLoginId}]"/> 
+                <else>
+                    <log level="always" message="Default project not found for user: [${userLogin.userLoginId}]"/>                
+                </else>
+            </if-not-empty>
+            <else>
+                <log level="always" message="User [${userLogin.userLoginId}] is missing workdspace"></log>
+            </else>
+        </if-not-empty>
+    </simple-method>
+
+    <simple-method method-name="getDefaultProjectId" short-description="Get default project Id">
+        <set field="getUserPreferenceGroupMap.userPrefGroupTypeId" value="WORKSPACE_PREFS"/>
+        <call-service service-name="getUserPreferenceGroup" in-map-name="getUserPreferenceGroupMap">
+            <results-to-map map-name="workspacePrefs"/>
+        </call-service>  
+        <set field="workspacePreferences" from-field="workspacePrefs.userPrefMap"/>
+        <set field="defaultProjectId" from-field="workspacePreferences.LAST_PROJECTID"/>         
+        <if-empty field="defaultProjectId">
+            <call-simple-method method-name="getActiveProjects"/>
+            <if-not-empty field="projects">
+                <set field="defaultProjectId" from-field="projects[0].workEffortId"/>
+            </if-not-empty>    
+        </if-empty>
+    </simple-method>
+
+    <simple-method method-name="getActiveProjects" short-description="Gets active project belonging to a workpsace">
+        <session-to-field field="workspaceId"/>
+        <if-not-empty field="workspaceId">
+            <entity-and list="projects" entity-name="WorkEffort">
+                <field-map field-name="workEffortParentId" from-field="workspaceId"/>
+                <field-map field-name="currentStatusId" value="PRJ_ACTIVE"/>
+            </entity-and>
+        </if-not-empty>
+    </simple-method>
+    
+</simple-methods>

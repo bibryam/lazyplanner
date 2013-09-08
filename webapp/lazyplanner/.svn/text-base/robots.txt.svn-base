@@ -1,0 +1,6 @@
+# robots.txt for http://lazyplanner.com/
+
+User-agent: *
+Disallow: /control/main # This is an infinite virtual URL space
+
+Sitemap: http://lazyplanner.com/sitemap.xml

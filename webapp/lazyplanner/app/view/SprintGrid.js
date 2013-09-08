@@ -1,0 +1,165 @@
+/*
+ Copyright (C) Bilgin Ibryam http://www.ofbizian.com
+
+ This is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Lesser General Public License as published by
+ the Free Software Foundation, either version 2.1 of the License, or
+ (at your option) any later version.
+
+ Foobar is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU Lesser General Public License for more details.
+
+ You should have received a copy of the GNU Lesser General Public License
+ along with this software.  If not, see http://www.fsf.org
+ */
+Ext.define('TodoBrowser.SprintGrid', {
+    extend: 'Ext.grid.Panel',
+    alias: 'widget.sprintGrid',
+    id : 'sprintGrid',
+    initComponent: function(){
+        this.addEvents('rowdblclick','select');
+        this.createStore();
+        Ext.apply(this, {
+            cls: 'sprint-grid',
+            store: this.store,
+            bbar: this.createPagic(),
+            viewConfig: {
+                itemId: 'view',
+                getRowClass: function(grid, rowIndex, rowParams, store){
+                	var currentStatusId = store.getAt(rowIndex).get('currentStatusId');
+                	return 'x-grid-row-' + statusTreeClass(currentStatusId);
+                },
+                plugins: [{
+                    pluginId: 'preview',
+                    ptype: 'preview',
+                    bodyField: 'description',
+                    previewExpanded: false
+                }],
+                listeners: {
+                    scope: this,
+                    itemdblclick: this.onRowDblClick
+                }
+            },
+            columns: [{
+                text: 'Title',
+                dataIndex: 'workEffortName',
+                flex: 4,
+                renderer: this.formatTitle
+            }, {
+                text: 'Responsible',
+                dataIndex: 'currentPartyId',
+                flex: 2,
+                renderer: this.formatResponsible
+            }, {
+                text: 'Due Date',
+                dataIndex: 'estimatedCompletionDate',
+                renderer: this.formatDueDate,
+                flex: 2
+            }, {
+                text: 'Priority',
+                dataIndex: 'priority',
+                renderer: this.formatPriority,
+                width: 40
+            }]
+        });
+        this.callParent(arguments);
+        this.on('selectionchange', this.onSelect, this);
+    },
+    
+    createStore : function() {
+    	this.store = Ext.create('Ext.data.Store', {
+            model: 'TodoBrowser.StoryGrid',
+            autoLoad: false,
+            //autoLoad: {start: 0, limit: 25},
+            sorters: [{
+    	                    property : 'priority',
+    	                    direction: 'ASC'
+    	               },
+                      {
+                          property : 'workEffortName',
+                          direction: 'ASC'
+                      }       
+                  ],
+            proxy: {
+                type: 'ajax',
+                url: findStories,
+                reader: {
+                    type: 'json',
+                    root: 'workEfforts'
+                }
+            },
+            listeners: {
+                load: this.onLoad,
+                scope: this
+            }
+        });
+    	return this.store;
+	},
+    
+    createPagic : function() {
+    	this.pagic = Ext.create('Ext.PagingToolbar', {
+            store: this.store,
+            displayInfo: true,
+            displayMsg: 'Displaying tasks {0} - {1} of {2}',
+            emptyMsg: "No tasks to display"
+        });
+    	return this.pagic;
+	},
+ 
+    onRowDblClick: function(view, record, item, index, e) {
+        //grid.getComponent('view').getPlugin('preview').toggleExpanded(pressed);
+        //this.fireEvent('rowdblclick', this, this.store.getAt(index));
+    },
+
+    onSelect: function(model, selections){
+        var selected = selections[0];
+        if (selected) {
+        	this.fireEvent('storySelect', selected.data.workEffortId);
+        }
+    },
+
+    onLoad : function(store, records, successful,  eOpts ) {
+    	if (!successful) {
+    		showError("Error loading data. Please sign in again.");
+    	}
+    },
+    
+    loadSprint: function(filterParams){
+    	this.store.getProxy().extraParams = filterParams.map;
+    	this.store.load({
+            params:{
+                start:0,    
+                limit: 10
+            }
+        });
+    },
+    
+    formatTitle: function(value, p, record){
+        var relatedTo = relatedComponentStore.getById(record.get('showAsEnumId')).get("name");
+        var typeClass = 'grid-' + treeIconClsConvert(value, record);
+    	return Ext.String.format('<div class="grid-title-cell {0}"><b>{1}</b><span class="subtitle">{2}</span></div>', typeClass, value, relatedTo);
+    },
+    
+    formatResponsible: function(value, p, record){
+        var responsible = projectPartyStore.getById(value).get("name");
+        var taskType = storyTypeStore.getById(record.get('workEffortPurposeTypeId')).get("name");
+    	return Ext.String.format('<div class="grid-double-cell"><span class="first-row">{0}</span><span class="subtitle">{1}</span></div>', responsible, taskType);
+    },
+    
+    formatDueDate: function(value, p, record){
+    	var currentStatusId = record.get('currentStatusId');
+        var taskStatus = storyStatusStore.getById(currentStatusId).get("name");
+        if (value) {
+        	value = Ext.Date.format(value, displayDateForm);
+        } else {
+        	value = "Not set";
+        }
+    	return Ext.String.format('<div class="grid-double-cell"><span class="first-row">{0}</span><span class="subtitle">{1}</span></div>', value, taskStatus);
+    },
+
+    formatPriority: function(value, p, record, rowIndex , colIndex , store, view){
+    	return Ext.String.format('<div class="grid-priority-cell"><span class="priority">{0}</span></div>', value);
+    }
+});

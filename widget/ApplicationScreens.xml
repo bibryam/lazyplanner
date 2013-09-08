@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Copyright (C) Bilgin Ibryam http://www.ofbizian.com
+
+This is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation, either version 2.1 of the License, or
+(at your option) any later version.
+
+Foobar is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with this software.  If not, see http://www.fsf.org
+-->
+
+<screens xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+        xsi:noNamespaceSchemaLocation="http://ofbiz.apache.org/dtds/widget-screen.xsd">
+
+    <screen name="ext-decorator">
+        <section>
+            <actions>
+                <property-map resource="CommonUiLabels" map-name="uiLabelMap" global="true"/>            
+                <set field="layoutSettings.commonHeaderImageLinkUrl" from-field="layoutSettings.commonHeaderImageLinkUrl" default-value="main" global="true"/>
+                <set field="layoutSettings.companyName" value="Company"/>
+                <service service-name="getUserPreferenceGroup" result-map="workspacePrefs">
+                    <field-map field-name="userPrefGroupTypeId" value="WORKSPACE_PREFS"/>
+                </service>
+                <set field="workspacePreferences" from-field="workspacePrefs.userPrefMap"/>
+                <service service-name="getUserPreferenceGroup" result-map="prefResult">
+                    <field-map field-name="userPrefGroupTypeId" value="GLOBAL_PREFERENCES"/>
+                </service>
+                <set field="userPreferences" from-field="prefResult.userPrefMap" global="true"/>
+                <set field="visualThemeId" from-field="userPreferences.VISUAL_THEME" global="true"/>
+                <service service-name="getVisualThemeResources">
+                    <field-map field-name="visualThemeId"/>
+                    <field-map field-name="themeResources" from-field="layoutSettings"/>
+                </service>
+                <set field="layoutSettings" from-field="themeResources" default-value="${layoutSettings}" global="true"/>
+                <set field="messagesTemplateLocation" from-field="layoutSettings.VT_MSG_TMPLT_LOC[0]" default-value="component://common/webcommon/includes/messages.ftl"/>
+                <property-to-field resource="general" property="defaultOrganizationPartyId" field="defaultOrganizationPartyIdProperties"/>
+                <set field="defaultOrganizationPartyId" value="${bsh:&quot;DEFAULT&quot;.equals(userPreferences.get(&quot;ORGANIZATION_PARTY&quot;))?defaultOrganizationPartyIdProperties:userPreferences.get(&quot;ORGANIZATION_PARTY&quot;)}" global="true"/>
+                <property-to-field resource="general" property="currency.uom.id.default" field="defaultCurrencyUomId"/>
+                <entity-one entity-name="PartyAcctgPrefAndGroup" value-field="orgParty">
+                    <field-map field-name="partyId" from-field="defaultOrganizationPartyId"/>
+                </entity-one>
+                <set field="defaultOrganizationPartyCurrencyUomId" from-field="orgParty.baseCurrencyUomId" default-value="defaultCurrencyUomId" global="true"/>
+                <set field="defaultOrganizationPartyGroupName" from-field="orgParty.groupName" global="true"/>
+            </actions>
+            <widgets>
+            <section>
+                <condition>
+                    <not><if-empty field="workspaceId"/></not>
+                </condition>
+                <widgets>
+                    <platform-specific><html><html-template location="component://lazyplanner/includes/app/header.ftl"/></html></platform-specific>
+                    <decorator-section-include name="pre-body"/>
+                    <platform-specific><html><html-template location="component://lazyplanner/includes/app/top.ftl"/></html></platform-specific>
+                    <decorator-section-include name="body"/>
+                    <platform-specific><html><html-template location="component://lazyplanner/includes/app/footer.ftl"/></html></platform-specific>
+                </widgets>
+                <fail-widgets>
+                    <label text="Workspace not found for user: ${userLogin.userLoginId}"></label>
+                </fail-widgets>
+            </section>
+            </widgets>
+        </section>
+    </screen>    
+ 
+    <screen name="Main">
+        <section>
+            <actions>
+                <set field="currentProjectId" from-field="currentProjectId" from-scope="user"/>
+            </actions>
+            <widgets>
+                <section>
+                    <condition>
+                        <if-empty field="currentProjectId"/>
+                    </condition>
+                    <widgets>
+                        <include-screen name="Account"/>
+                    </widgets>
+                    <fail-widgets>
+                        <include-screen name="Workspace"/>
+                    </fail-widgets>
+                </section>
+            </widgets>
+        </section>
+    </screen>
+      
+    <screen name="Workspace">
+        <section>
+            <actions>
+                <set field="currentProjectId" from-field="currentProjectId" from-scope="user" global="true"/>        
+            </actions>
+            <widgets>
+                <section>   
+                    <condition>
+                        <not><if-empty field="currentProjectId"/></not>
+                    </condition>            
+                    <widgets>
+                        <section>
+                            <actions>
+                                <set field="screenName" value="WORKSPACE" global="true" type="PlainString"/>
+                                <set field="workspaceId" from-scope="user" from-field="workspaceId" global="true"/>
+                                <entity-one value-field="workspace" entity-name="WorkEffort">
+                                    <field-map field-name="workEffortId" from-field="workspaceId"/>
+                                </entity-one>       
+                                <set field="workspace" from-field="workspace" global="true"/>                                                                                     
+                                <entity-one value-field="currentProject" entity-name="WorkEffort">
+                                    <field-map field-name="workEffortId" from-field="currentProjectId"/>
+                                </entity-one>
+                                <set field="currentProject" from-field="currentProject" global="true"/>                                                                                                                     
+                                <entity-condition list="projects" entity-name="WorkEffortAndPartyAssign" filter-by-date="true">
+                                    <condition-list>
+                                        <condition-list combine="or">
+                                            <condition-expr field-name="roleTypeId" value="PROJECT_OWNER"/>
+                                            <condition-expr field-name="roleTypeId" value="PROJECT_MEMBER"/>
+                                        </condition-list>
+                                        <condition-expr field-name="partyId" from-field="userLogin.partyId"/>
+                                    </condition-list>
+                                    <select-field field-name="workEffortId"/>
+                                    <select-field field-name="workEffortName"/>
+                                </entity-condition>
+                                <set field="projects" from-field="projects" global="true"/>
+                                <entity-condition list="projectParties" entity-name="WorkEffortAndPartyAssign" filter-by-date="true">
+                                    <condition-list>
+                                        <condition-list combine="or">
+                                            <condition-expr field-name="roleTypeId" value="PROJECT_OWNER"/>
+                                            <condition-expr field-name="roleTypeId" value="PROJECT_MEMBER"/>
+                                        </condition-list>
+                                        <condition-expr field-name="workEffortId" from-field="currentProjectId"/>
+                                    </condition-list>
+                                </entity-condition>
+                                <service service-name="getUserPreferenceGroup" result-map="projectPrefs">
+                                    <field-map field-name="userPrefGroupTypeId" from-field="currentProjectId"/>
+                                </service>
+                                <set field="projectPreferences" from-field="projectPrefs.userPrefMap" global="true"/>
+                                <entity-and list="workEffortPurposeTypes" entity-name="WorkEffortPurposeType">
+                                    <field-map field-name="parentTypeId" value="STORY_PURPOSE"/>
+                                </entity-and>
+                                <entity-and list="statusItems" entity-name="StatusItem">
+                                    <field-map field-name="statusTypeId" value="STORY_STATUS"/>
+                                </entity-and>
+                                <entity-and list="sprints" entity-name="WorkEffort">
+                                    <field-map field-name="projectId" from-field="currentProjectId"/> 
+                                    <field-map field-name="workEffortTypeId" value="SPRINT"/> 
+                                    <select-field field-name="workEffortId"/>
+                                    <select-field field-name="workEffortName"/>
+                                    <select-field field-name="workEffortPurposeTypeId"/>
+                                    <order-by field-name="createdDate"/>
+                                </entity-and>
+                                <entity-and list="relatedComponents" entity-name="Enumeration">
+                                    <field-map field-name="enumTypeId" value="STORY_COMP_TYPE"/> 
+                                    <order-by field-name="sequenceId"/>
+                                </entity-and>                                             
+                                <set field="backlogId" value="${bsh:com.lp.util.CommonHelper.getBacklogId(sprints)}"/>
+                            </actions>                 
+                            <widgets>
+                                <decorator-screen name="ext-decorator">
+                                    <decorator-section name="pre-body">
+                                        <platform-specific><html><html-template location="component://lazyplanner/includes/app/workspaceHeader.ftl"/></html></platform-specific>
+                                    </decorator-section>
+                                </decorator-screen> 
+                            </widgets>                 
+                        </section>
+                    </widgets>
+                    <fail-widgets>
+                        <label text="Project not selected"></label>
+                    </fail-widgets>            
+                </section>
+            </widgets>
+        </section>
+    </screen>
+      
+    <screen name="Account">
+        <section>       
+            <actions>
+                <set field="screenName" value="ACCOUNT" global="true" type="PlainString"/>
+                <set field="workspaceId" from-scope="user" from-field="workspaceId" global="true"/>
+                <entity-one value-field="workspace" entity-name="WorkEffort">
+                    <field-map field-name="workEffortId" from-field="workspaceId"/>
+                </entity-one>    
+                <set field="workspace" from-field="workspace" global="true"/>                            
+                <entity-condition list="projects" entity-name="WorkEffortAndPartyAssignAndType" filter-by-date="true">
+                    <condition-list>
+                        <condition-list combine="or">
+                            <condition-expr field-name="roleTypeId" value="PROJECT_OWNER"/>
+                            <condition-expr field-name="roleTypeId" value="PROJECT_MEMBER"/>
+                        </condition-list>
+                        <condition-expr field-name="partyId" from-field="userLogin.partyId"/>
+                    </condition-list>
+                    <select-field field-name="workEffortId"/>
+                    <select-field field-name="workEffortName"/>
+                </entity-condition>
+                <set field="projects" from-field="projects" global="true"/>  
+                <entity-and list="workspaceProjects" entity-name="WorkEffort">
+                    <field-map field-name="workEffortParentId" from-field="workspaceId"/>
+                    <field-map field-name="workEffortTypeId" value="PROJECT"/>
+                    <select-field field-name="workEffortId"/>
+                    <select-field field-name="workEffortName"/>
+                </entity-and>  
+                <entity-condition list="assignedProjects" entity-name="WorkEffortAndPartyAssign" filter-by-date="true">
+                    <condition-list>
+                        <condition-list combine="or">
+                            <condition-expr field-name="roleTypeId" value="PROJECT_MEMBER"/>
+                        </condition-list>
+                        <condition-expr field-name="partyId" from-field="userLogin.partyId"/>
+                        <condition-expr field-name="workEffortParentId" from-field="workspaceId" operator="not-equals"/>
+                    </condition-list>
+                    <select-field field-name="workEffortId"/>
+                    <select-field field-name="workEffortName"/>
+                </entity-condition>
+                <entity-and list="workspaceParties" entity-name="WorkEffortPartyAssignView" filter-by-date="true">
+                    <field-map field-name="workEffortId" from-field="workspaceId"/>
+                    <field-map field-name="roleTypeId" value="WORKSPACE_MEMBER"/>
+                    <select-field field-name="partyId"/>
+                    <select-field field-name="firstName"/>
+                    <select-field field-name="lastName"/>
+                </entity-and>
+                <entity-and list="projectRoles" entity-name="RoleType">
+                    <field-map field-name="parentTypeId" value="PROJECT_ROLES"/>
+                    <select-field field-name="roleTypeId"/>
+                    <select-field field-name="description"/>
+                </entity-and>                
+            </actions>
+            <widgets>
+                <decorator-screen name="ext-decorator">
+                    <decorator-section name="pre-body">
+                        <platform-specific><html><html-template location="component://lazyplanner/includes/app/accountHeader.ftl"/></html></platform-specific>
+                    </decorator-section>             
+                </decorator-screen>
+            </widgets>
+        </section>
+    </screen>
+ 
+    <screen name="AccountHelp">
+        <section>  
+            <actions>
+                <set field="pageName" from-field="parameters.page" default-value="noPage"/>
+            </actions>     
+            <widgets>
+                <platform-specific><html><html-template location="component://lazyplanner/includes/app/accountHelp.ftl"/></html></platform-specific>
+            </widgets>
+        </section>
+    </screen>
+</screens>

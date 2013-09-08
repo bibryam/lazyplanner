@@ -1,0 +1,143 @@
+/*
+ Copyright (C) Bilgin Ibryam http://www.ofbizian.com
+
+ This is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Lesser General Public License as published by
+ the Free Software Foundation, either version 2.1 of the License, or
+ (at your option) any later version.
+
+ Foobar is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU Lesser General Public License for more details.
+
+ You should have received a copy of the GNU Lesser General Public License
+ along with this software.  If not, see http://www.fsf.org
+ */
+Ext.define('TodoBrowser.SprintInfo', {
+    extend: 'Ext.panel.Panel',
+    alias: 'widget.sprintInfo',
+    id : 'sprintInfo',
+    border: true,
+    title: 'Tasks List',
+    layout: 'fit',   
+    initComponent: function(){
+    	this.filterParams = new Ext.util.HashMap();
+    	this.filterDescriptions = new Ext.util.HashMap();
+
+    	Ext.apply(this, {
+            items: this.createGrid(),
+            dockedItems: [this.createToolbar()]
+        });
+        this.relayEvents(this.grid, ['storySelect']);
+        this.callParent(arguments);
+    },
+    
+    reloadLastSprint : function(){
+		this.grid.loadSprint(this.filterParams);    	
+    },
+    
+    loadSprint: function(workEffortId, workEffortName){
+		this.addFilterParams('sprintId', workEffortId);
+		this.addFilterDescriptions('workEffortName', workEffortName);
+        this.displayFilterDescription();
+		this.grid.loadSprint(this.filterParams);
+    },
+
+    createGrid: function(){
+        this.grid = Ext.create('widget.sprintGrid', {
+            border: false,
+            listeners: {
+                //scope: this,
+               // storySelect: this.onStorySelect
+            }
+        });
+       // this.loadSprint(this.workEffortId);
+        return this.grid;
+    },
+
+    //onStorySelect: function(grid, rec) {
+    //	this.fireEvent('storySelect', rec.get('workEffortId'));
+    //},
+
+    createToolbar: function() {
+    	 this.filterMenu = Ext.create('widget.filterMenu', {
+             listeners: {
+                 scope: this,
+                 filterSelect: this.onFilterSelect
+             }
+         });
+        
+        this.toolbar = Ext.create('widget.toolbar', {
+           // cls: 'x-docked-noborder-top',
+            items: [
+            {
+                text:'Filter',
+                id : 'filter',
+                iconCls: 'view-filter',
+                menu: this.filterMenu  
+            }
+            ,{
+                text:'No Filter Applied',
+                id : 'filterMessage',
+                iconCls: 'arrow-right-4',
+                disabledCls: 'filter-item-disabled',
+                disabled : true
+            }
+            ,'->'
+            , {
+                iconCls: 'arrow-out',
+                text: 'Show Details',
+                enableToggle: true,
+                pressed: false,
+                scope: this,
+                toggleHandler: this.onStoryDetailsToggle,
+                showPressed : function() {
+                	this.setText("Hide Details");
+                	this.setIconCls("arrow-in");
+                },
+                showOriginal : function() {
+                	this.setText("Show Details");
+                	this.setIconCls("arrow-out");
+                }
+            }
+            ]
+        });
+        return this.toolbar;
+    },
+
+    onFilterSelect: function(item) {
+    	this.addFilterParams(item.group, item.filterValue);
+		this.addFilterDescriptions(item.ownerCt.parentItem.text, item.text);
+		this.displayFilterDescription();
+		this.grid.loadSprint(this.filterParams);
+    },
+
+    displayFilterDescription: function() {
+    	var filterName = 'Tasks from: ' + this.filterDescriptions.get('workEffortName'); 
+    	this.filterDescriptions.each(function(key, value, length) {
+    		if ('workEffortName' != key) {
+    			filterName = filterName + ", " + key + ": " + value;
+    		}
+    	}, this);
+    	Ext.getCmp('filterMessage').setText(filterName);
+    },
+    
+    addFilterParams: function(key, value) {
+    	this.filterParams.add(key, value);
+    },
+
+    addFilterDescriptions: function(key, value) {
+    	this.filterDescriptions.add(key, value);
+    },
+    
+    onStoryDetailsToggle: function(btn, pressed) {
+        this.grid.getComponent('view').getPlugin('preview').toggleExpanded(pressed);
+        if (pressed) {
+        	btn.showPressed();
+        } else {
+        	btn.showOriginal();
+        }
+    }
+    
+});

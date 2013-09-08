@@ -1,0 +1,71 @@
+Ext.define('TodoBrowser.CommentForm', {
+    extend: 'Ext.form.Panel',
+    alias: 'widget.commentForm',
+    id : 'commentForm',
+    border: false,
+    bodyPadding: '10px',
+    anchor:'100%',
+    fieldDefaults: {
+        labelAlign: 'top',
+        msgTarget: 'under',//side
+        //labelWidth: 100,
+        labelStyle: 'font-weight:bold'
+    },
+    defaults: {
+        margins: '0 0 10 0'
+    },
+
+    items: [
+	//{
+    //    xtype: 'textfield',
+    //    fieldLabel: 'Subject',
+    //    allowBlank: false
+    //},
+    {
+        anchor:'100%',
+    	xtype: 'textarea',
+        name: 'noteInfo',
+        grow      : true,
+        fieldLabel: 'Comment*',
+        emptyText: 'Your comment for this task',
+        allowBlank: false
+    }],
+          
+    initComponent: function(){
+	    Ext.apply(this, {
+        buttons: [{
+            text: 'Save',
+            scope: this,
+            handler: function() {
+            	Ext.getCmp('commentForm').getForm().submit({
+            		clientValidation: true,
+            		url: createComment,
+            	    params:{workEffortId : this.workEffortId},
+          		    success: function(form, action){
+          		    	form.reset();
+          		    	showMessage("Comment added successfully");
+          		    	Ext.getCmp('commentForm').onCommentCreate();
+        		    },
+        		    failure: function(form, action){
+       		    		extractAndShowError(action);
+        		    }
+        		});
+            }
+        },{
+            text: 'Cancel',
+        	handler: function(){
+        		//Ext.getCmp('commentForm').getForm().reset();
+                this.up('commentForm').getForm().reset();
+      	   }
+        }],
+      });
+	    this.callParent(arguments);
+      },
+      
+      onCommentCreate: function() {
+  		this.ownerCt.onCommentCreate();
+      }
+});
+
+
+

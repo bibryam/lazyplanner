@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Copyright (C) Bilgin Ibryam http://www.ofbizian.com
+
+This is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation, either version 2.1 of the License, or
+(at your option) any later version.
+
+Foobar is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with this software.  If not, see http://www.fsf.org
+-->
+
+<entity-engine-xml>
+    <SecurityGroup description="Lazy Planner Admin group, has all lazy planner permissions." groupId="LAZYPLANNERADMIN"/>
+    <SecurityGroupPermission groupId="LAZYPLANNERADMIN" permissionId="WORKEFFORTMGR_ADMIN"/>
+    <SecurityGroupPermission groupId="LAZYPLANNERADMIN" permissionId="PARTYMGR_GRP_UPDATE"/>
+
+    <Party partyId="DEFAULT_USER" partyTypeId="PERSON"/>
+    <Person partyId="DEFAULT_USER" firstName="Not" lastName="Assigned"/>
+    <!-- end of parties -->
+    
+    <WebSite webSiteId="LAZY_PLANNER" siteName="Lazy Planner Application" visualThemeSetId="BACKOFFICE"/>  
+    <UserPrefGroupType userPrefGroupTypeId="WORKSPACE_PREFS" description="Workspace preferences" />  
+    
+    <WorkEffortType description="Workspace" hasTable="N" parentTypeId="" workEffortTypeId="WORK_SPACE"/>
+    <WorkEffortType description="Project" hasTable="N" parentTypeId="" workEffortTypeId="PROJECT"/>
+    <WorkEffortType description="Release" hasTable="N" parentTypeId="PHASE" workEffortTypeId="RELEASE"/>
+    <WorkEffortType description="Sprint" hasTable="N" parentTypeId="PHASE" workEffortTypeId="SPRINT"/>
+    <WorkEffortType description="Story" hasTable="N" parentTypeId="TASK" workEffortTypeId="STORY"/>
+
+    <WorkEffortPurposeType description="Project Types" parentTypeId="" workEffortPurposeTypeId="PROJECT_PURPOSE"/>
+    <WorkEffortPurposeType description="ToDo List" parentTypeId="PROJECT_PURPOSE" workEffortPurposeTypeId="TODO_PROJECT"/>
+    <WorkEffortPurposeType description="Kanban" parentTypeId="PROJECT_PURPOSE" workEffortPurposeTypeId="KANBAN_PROJECT"/>
+    <WorkEffortPurposeType description="Scrum" parentTypeId="PROJECT_PURPOSE" workEffortPurposeTypeId="SCRUM_PROJECT"/>
+
+    <WorkEffortPurposeType description="Story Types" parentTypeId="" workEffortPurposeTypeId="STORY_PURPOSE"/>
+    <WorkEffortPurposeType description="Bug" parentTypeId="STORY_PURPOSE" workEffortPurposeTypeId="STORY_BUG"/>
+    <WorkEffortPurposeType description="New Feature" parentTypeId="STORY_PURPOSE" workEffortPurposeTypeId="STORY_NEW_FEATURE"/>
+    <WorkEffortPurposeType description="Task" parentTypeId="STORY_PURPOSE" workEffortPurposeTypeId="STORY_TASK"/>
+
+    <WorkEffortPurposeType description="Sprint Types" parentTypeId="" workEffortPurposeTypeId="SPRINT_PURPOSE"/>
+    <WorkEffortPurposeType description="Sprint" parentTypeId="SPRINT_PURPOSE" workEffortPurposeTypeId="SPRINT"/>
+    <WorkEffortPurposeType description="Backlog" parentTypeId="SPRINT_PURPOSE" workEffortPurposeTypeId="BACKLOG"/>
+
+    <EnumerationType description="Component Type" enumTypeId="STORY_COMP_TYPE" hasTable="N" parentTypeId=""/>
+    <Enumeration description="User Interface" enumCode="UICOMPONENT" enumId="UICOMPONENT" sequenceId="01" enumTypeId="STORY_COMP_TYPE"/>
+    <Enumeration description="Backend" enumCode="BECOMPONENT" enumId="BECOMPONENT" sequenceId="02" enumTypeId="STORY_COMP_TYPE"/>
+      
+    <RoleType description="Project Team" hasTable="N" parentTypeId="" roleTypeId="PROJECT_TEAM"/>
+    <RoleType description="Workspace Owner" hasTable="N" parentTypeId="PROJECT_TEAM" roleTypeId="WORKSPACE_OWNER"/>
+    <RoleType description="Workspace Member" hasTable="N" parentTypeId="PROJECT_TEAM" roleTypeId="WORKSPACE_MEMBER"/>
+    <RoleType description="Story OWNER" hasTable="N" parentTypeId="PROJECT_TEAM" roleTypeId="STORY_OWNER"/> 
+
+    <RoleType description="Project Roles" hasTable="N" parentTypeId="PROJECT_TEAM" roleTypeId="PROJECT_ROLES"/>
+    <RoleType description="Project Owner" hasTable="N" parentTypeId="PROJECT_ROLES" roleTypeId="PROJECT_OWNER"/>
+    <RoleType description="Project Member" hasTable="N" parentTypeId="PROJECT_ROLES" roleTypeId="PROJECT_MEMBER"/>
+    
+    <StatusType description="Story Status" hasTable="N" parentTypeId="" statusTypeId="STORY_STATUS"/>    
+    <StatusItem description="Created" sequenceId="01" statusCode="CREATED" statusId="STORY_CREATED" statusTypeId="STORY_STATUS"/>
+    <StatusItem description="In Progress" sequenceId="02" statusCode="IN_PROGRESS" statusId="STORY_IN_PROGRESS" statusTypeId="STORY_STATUS"/>
+    <StatusItem description="Completed" sequenceId="03" statusCode="COMPLETED" statusId="STORY_COMPLETED" statusTypeId="STORY_STATUS"/>
+    <StatusItem description="Cancelled" sequenceId="04" statusCode="CANCELLED" statusId="STORY_CANCELLED" statusTypeId="STORY_STATUS"/>
+    <StatusValidChange condition="" statusId="STORY_CREATED" statusIdTo="STORY_IN_PROGRESS" transitionName="Task Started"/>
+    <StatusValidChange condition="" statusId="STORY_CREATED" statusIdTo="STORY_COMPLETED" transitionName="Task Completed"/>
+    <StatusValidChange condition="" statusId="STORY_CREATED" statusIdTo="STORY_CANCELLED" transitionName="Task Cancelled"/>
+    <StatusValidChange condition="" statusId="STORY_IN_PROGRESS" statusIdTo="STORY_COMPLETED" transitionName="Task Completed"/>
+
+    <StatusType description="Project" hasTable="N" parentTypeId="WORK_EFFORT_STATUS" statusTypeId="PROJECT_STATUS"/>
+    <StatusItem description="Project Status" sequenceId="01" statusCode="PROJECT_STATUS" statusId="PROJECT_STATUS" statusTypeId="PROJECT_STATUS"/>
+    <StatusItem description="Active" sequenceId="01" statusCode="ACTIVE" statusId="PRJ_ACTIVE" statusTypeId="PROJECT_STATUS"/>
+    <StatusItem description="Closed" sequenceId="02" statusCode="CLOSED" statusId="PRJ_CLOSED" statusTypeId="PROJECT_STATUS"/>
+    <StatusItem description="Cancelled" sequenceId="03" statusCode="CANCELLED" statusId="PRJ_CANCELLED" statusTypeId="PROJECT_STATUS"/>
+    <StatusValidChange condition="" statusId="PRJ_ACTIVE" statusIdTo="PRJ_CLOSED" transitionName="Close project"/>
+    <StatusValidChange condition="" statusId="PRJ_ACTIVE" statusIdTo="PRJ_CANCELLED" transitionName="Cancel project"/>
+    
+</entity-engine-xml>

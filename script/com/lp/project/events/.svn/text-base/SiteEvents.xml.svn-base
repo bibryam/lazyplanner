@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+
+<simple-methods xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="http://ofbiz.apache.org/dtds/simple-methods.xsd">
+
+    <simple-method method-name="createAccount" short-description="Create Customer Account" login-required="false">
+        <!-- Create the UserLogin Record -->
+        <call-map-processor in-map-name="parameters" out-map-name="userLoginContext">
+            <simple-map-processor name="newUserLogin">
+                <process field="ACCOUNT_NAME"><copy to-field="accountName"/><not-empty><fail-message  message="Company Name is Missing"/></not-empty></process>
+                <process field="USERNAME"><copy to-field="userLoginId"/><not-empty><fail-property resource="PartyUiLabels" property="PartyUserLoginMissingError"/></not-empty></process>
+                <process field="PASSWORD"><copy to-field="currentPassword"/><not-empty><fail-property resource="PartyUiLabels" property="PartyPasswordMissing"/></not-empty></process>
+                <process field="CONFIRM_PASSWORD">
+                    <compare-field operator="equals" field="PASSWORD"><fail-property resource="PartyUiLabels" property="PartyPasswordMatchError"/></compare-field>
+                    <!-- This is checked below in the checkNewPassword method in the bsh block: <not-empty><fail-message message="You must enter your password twice"/></not-empty> -->
+                    <copy to-field="currentPasswordVerify"/>
+                </process>
+            </simple-map-processor>
+        </call-map-processor>
+
+        <if-not-empty field="userLoginContext.userLoginId">
+            <set from-field="userLoginContext.userLoginId" field="userLoginExistsMap.userLoginId"/>
+            <find-by-primary-key entity-name="UserLogin" map="userLoginExistsMap" value-field="existingUserLogin"/>
+            <if-not-empty field="existingUserLogin">
+                <property-to-field field="tempErrorMessage" resource="PartyUiLabels" property="PartyUserNameInUse"/>
+                <string-to-list string="${tempErrorMessage}" message-field="USERNAME" list="error_list"/>
+            </if-not-empty>
+        </if-not-empty>
+
+        <make-value entity-name="UserLogin" value-field="newUserLogin"/>
+        <set from-field="userLoginContext.userLoginId" field="newUserLogin.userLoginId"/>
+        <set from-field="userLoginContext.currentPassword" field="newUserLogin.currentPassword"/>
+        
+        <!-- Check the password, etc for validity -->
+        <call-bsh><![CDATA[
+            String password = (String) userLoginContext.get("currentPassword");
+            String confirmPassword = (String) userLoginContext.get("currentPasswordVerify");
+            org.ofbiz.common.login.LoginServices.checkNewPassword(newUserLogin, null, password, confirmPassword, null, error_list, true, locale);
+        ]]></call-bsh>
+
+        <!-- Create the Person -->
+        <call-map-processor in-map-name="parameters" out-map-name="personContext">
+            <simple-map-processor name="newPerson">
+                <process field="USER_FIRST_NAME">
+                    <copy to-field="firstName"/>
+                    <not-empty><fail-property resource="PartyUiLabels" property="PartyFirstNameMissing"/></not-empty>
+                </process>
+                <process field="USER_LAST_NAME">
+                    <copy to-field="lastName"/>
+                    <not-empty><fail-property resource="PartyUiLabels" property="PartyLastNameMissingError"/></not-empty>
+                </process>
+            </simple-map-processor>
+        </call-map-processor>
+
+        <!-- Create the email address -->
+        <call-map-processor in-map-name="parameters" out-map-name="emailContext">
+            <simple-map-processor name="newEmail">
+                <process field="CUSTOMER_EMAIL">
+                    <copy to-field="emailAddress"/>
+                    <not-empty><fail-property resource="PartyUiLabels" property="PartyEmailAddressNotFormattedCorrectly"/></not-empty>                    
+                    <validate-method method="isEmail"><fail-property resource="PartyUiLabels" property="PartyEmailAddressNotFormattedCorrectly"/></validate-method>
+                </process>
+            </simple-map-processor>
+        </call-map-processor>
+
+        <!-- validate that email is not in verification queue -->
+        <entity-one value-field="emailAddressVerification" entity-name="EmailAddressVerification">
+            <field-map field-name="emailAddress" from-field="emailContext.emailAddress"/>
+        </entity-one>
+        <if-not-empty field="emailAddressVerification">
+            <string-to-list string="Email address is already used" message-field="CUSTOMER_EMAIL" list="error_list"/>
+        </if-not-empty>
+        
+         <!-- now that everything is validated & setup, check to see if there are errors, then call the services -->
+        <check-errors/>
+
+        <set-service-fields map="personContext" service-name="createPersonAndUserLogin" to-map="personUserLoginContext"/>
+        <set-service-fields map="newUserLogin" service-name="createPersonAndUserLogin" to-map="personUserLoginContext"/>
+        <set from-field="newUserLogin.currentPassword" field="personUserLoginContext.currentPasswordVerify"/>
+        <set field="personUserLoginContext.enabled" value="N"/>
+        <set field="personUserLoginContext.nickname" from-field="userLoginContext.accountName"/>
+        <set field="personUserLoginContext.occupation" from-field="parameters.plan"/>
+        <call-service service-name="createPersonAndUserLogin" in-map-name="personUserLoginContext">
+            <result-to-field result-name="partyId" field="tempMap.partyId"/>
+            <result-to-field field="createdUserLogin" result-name="newUserLogin"/>
+        </call-service>
+
+        <entity-one entity-name="UserLogin" value-field="userLogin">
+            <field-map field-name="userLoginId" value="system"/>
+        </entity-one>
+      
+        <!-- email address -->
+        <set field="emailContext.userLogin" from-field="userLogin"/>                
+        <set field="emailContext.partyId" from-field="tempMap.partyId"/>        
+        <call-service service-name="createPartyEmailAddress" in-map-name="emailContext">
+            <result-to-field result-name="contactMechId" field="emailPurposeContext.contactMechId"/>
+        </call-service>
+
+        <set field="emailPurposeContext.userLogin" from-field="userLogin"/>                            
+        <set field="emailPurposeContext.partyId" from-field="tempMap.partyId"/>
+        <set field="emailPurposeContext.contactMechPurposeTypeId" value="PRIMARY_EMAIL"/>
+        <call-service service-name="createPartyContactMechPurpose" in-map-name="emailPurposeContext"/>
+    
+        <!-- send off the email verification -->
+        <set field="emailParams.emailAddress" from-field="emailContext.emailAddress"/>
+        <call-service-asynch service-name="createEmailAddressVerification" in-map-name="emailParams"/>
+        <check-errors/>
+        
+        <!-- notify me for the new account -->
+        <set field="sendContactUsEmailToCompanyMap.firstName" from-field="personContext.firstName"/>
+        <set field="sendContactUsEmailToCompanyMap.lastName" from-field="personContext.lastName"/>              
+        <set field="sendContactUsEmailToCompanyMap.emailAddress" from-field="emailContext.emailAddress"/>              
+        <set field="sendContactUsEmailToCompanyMap.content" value="New account created for Company name: ${userLoginContext.accountName} with Plan: ${parameters.plan}"/>              
+        <set field="sendContactUsEmailToCompanyMap.partyIdTo" value="Company"/>              
+        <set field="sendContactUsEmailToCompanyMap.contactMechTypeId" value="WEB_ADDRESS"/>                
+        <set field="sendContactUsEmailToCompanyMap.communicationEventTypeId" value="WEB_SITE_COMMUNICATI"/>                
+        <set field="sendContactUsEmailToCompanyMap.emailType" value="CONT_NOTI_EMAIL"/>                
+        <set field="sendContactUsEmailToCompanyMap.productStoreId" value="LAZY_STORE"/>                
+        <call-service-asynch service-name="sendContactUsEmailToCompany" in-map-name="sendContactUsEmailToCompanyMap"/>
+
+        <property-to-field field="lPRegistrationSuccessful" resource="LazyPlannerUiLabels.xml" property="LPRegistrationSuccessful"/>
+        <set field="eventMessageList[+0]" from-field="lPRegistrationSuccessful"/>
+        <field-to-request field="eventMessageList" request-name="_EVENT_MESSAGE_LIST_"/>
+    </simple-method>
+
+    <simple-method method-name="activateAccount" short-description="Activate Customer Account" login-required="false">
+        <set field="verifyHash" from-field="parameters.verifyHash"/>
+        <if-not-empty field="verifyHash">
+            <set field="verifyEmailAddressMap.verifyHash" from-field="verifyHash"/>        
+            <call-service service-name="verifyEmailAddress" in-map-name="verifyEmailAddressMap"/>
+        <else>
+            <add-error><fail-message message="Validation key is wrong"/></add-error>
+        </else>
+        </if-not-empty>
+        <check-errors/>                                
+        
+        <!-- enable account -->
+        <entity-and entity-name="EmailAddressVerification" list="emailAddressVerifications">
+            <field-map field-name="verifyHash" from-field="parameters.verifyHash"/>
+        </entity-and>
+        <first-from-list list="emailAddressVerifications" entry="emailAddressVerification"/>
+        <if-not-empty field="emailAddressVerification">
+            <entity-and entity-name="PartyAndContactMech" list="partyAndContactMechs">
+                <field-map field-name="infoString" from-field="emailAddressVerification.emailAddress"/>
+            </entity-and>
+            <first-from-list list="partyAndContactMechs" entry="partyAndContactMech"/>
+            <if-not-empty field="partyAndContactMech">
+                <entity-and entity-name="UserLogin" list="userLogins">
+                    <field-map field-name="partyId" from-field="partyAndContactMech.partyId"/>
+                </entity-and>
+                <first-from-list list="userLogins" entry="userLogin"/>
+            </if-not-empty>
+        </if-not-empty>
+        
+        <if-empty field="userLogin">
+            <add-error><fail-message message="User Not found"/></add-error>
+        </if-empty>
+        <check-errors/>
+
+        <entity-one entity-name="UserLogin" value-field="systemUserLogin">
+            <field-map field-name="userLoginId" value="system"/>
+        </entity-one>        
+        <set field="updateUserLoginSecurityMap.userLogin" from-field="systemUserLogin"/>        
+        <set field="updateUserLoginSecurityMap.userLoginId" from-field="userLogin.userLoginId"/>
+        <set field="updateUserLoginSecurityMap.enabled" value="Y"/>        
+        <call-service service-name="updateUserLoginSecurity" in-map-name="updateUserLoginSecurityMap"/>
+        
+        <!-- give some perms -->        
+        <set field="addUserLoginToSecurityGroupMap.groupId" value="LAZYPLANNERADMIN"/>
+        <set field="addUserLoginToSecurityGroupMap.userLoginId" from-field="userLogin.userLoginId" />
+        <set field="addUserLoginToSecurityGroupMap.userLogin" from-field="systemUserLogin"/>        
+        <call-service service-name="addUserLoginToSecurityGroup" in-map-name="addUserLoginToSecurityGroupMap"/>
+        
+        <!-- get account name -->
+        <get-related-one relation-name="Person" to-value-field="person" value-field="userLogin"/>
+        
+        <!-- Create workspace -->
+        <set field="createWorkEffortAndPartyAssignMap.userLogin" from-field="systemUserLogin"/>                
+        <set field="createWorkEffortAndPartyAssignMap.partyId" from-field="userLogin.partyId"/>
+        <set field="createWorkEffortAndPartyAssignMap.roleTypeId" value="WORKSPACE_OWNER"/>
+        <set field="createWorkEffortAndPartyAssignMap.workEffortTypeId" value="WORK_SPACE"/>
+        <set field="createWorkEffortAndPartyAssignMap.currentStatusId" value="CAL_CONFIRMED"/>
+        <set field="createWorkEffortAndPartyAssignMap.statusId" value="CAL_CONFIRMED"/>
+        <set field="createWorkEffortAndPartyAssignMap.workEffortName" from-field="person.nickname"/>
+        <call-service service-name="createWorkEffortAndPartyAssign" in-map-name="createWorkEffortAndPartyAssignMap"/>
+         
+        <!-- Prevent double activation -->
+        <remove-value value-field="emailAddressVerification"/>
+        <property-to-field field="lPAccountIsActivated" resource="LazyPlannerUiLabels.xml" property="LPAccountIsActivated"/>
+        <set field="eventMessageList[+0]" from-field="lPAccountIsActivated"/>
+        <field-to-request field="eventMessageList" request-name="_EVENT_MESSAGE_LIST_"/>
+    </simple-method>
+    
+    <simple-method method-name="sendComment" short-description="Send Comments to Company" login-required="false">
+        <call-map-processor in-map-name="parameters" out-map-name="sendContactUsEmailToCompanyMap">
+            <simple-map-processor name="newComment">
+                <process field="FIRSTNAME"><copy to-field="firstName"/><not-empty><fail-message message="Name is a required field"/></not-empty></process>
+                <process field="EMAILADDRESS">
+                    <copy to-field="emailAddress"/>
+                    <not-empty><fail-property resource="PartyUiLabels" property="PartyEmailAddressNotFormattedCorrectly"/></not-empty>                    
+                    <validate-method method="isEmail"><fail-property resource="PartyUiLabels" property="PartyEmailAddressNotFormattedCorrectly"/></validate-method>
+                </process>
+                <process field="CONTENT"><copy to-field="content"/><not-empty><fail-property resource="PartyUiLabels" property="PartyNoContent"/></not-empty></process>
+            </simple-map-processor>
+        </call-map-processor>
+        <check-errors/>
+
+        <session-to-field field="userLogin"/>
+        <set field="sendContactUsEmailToCompanyMap.partyIdTo" value="Company"/>              
+        <set field="sendContactUsEmailToCompanyMap.partyIdFrom" from-field="userLogin.partyId"/>                
+        <set field="sendContactUsEmailToCompanyMap.contactMechTypeId" value="WEB_ADDRESS"/>                
+        <set field="sendContactUsEmailToCompanyMap.communicationEventTypeId" value="WEB_SITE_COMMUNICATI"/>                
+        <set field="sendContactUsEmailToCompanyMap.emailType" value="CONT_NOTI_EMAIL"/>                
+        <set field="sendContactUsEmailToCompanyMap.productStoreId" value="LAZY_STORE"/>                
+        <call-service-asynch service-name="sendContactUsEmailToCompany" in-map-name="sendContactUsEmailToCompanyMap"/>
+        <check-errors/>
+
+        <property-to-field field="lPMessageSentSuccessfully" resource="LazyPlannerUiLabels.xml" property="LPMessageSentSuccessfully"/>
+        <set field="eventMessageList[+0]" from-field="lPMessageSentSuccessfully"/>
+        <field-to-request field="eventMessageList" request-name="_EVENT_MESSAGE_LIST_"/>
+    </simple-method>
+</simple-methods>

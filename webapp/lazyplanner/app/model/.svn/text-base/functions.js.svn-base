@@ -1,0 +1,164 @@
+function statusTreeClass(currentStatusId) {
+    if ('STORY_CREATED' == currentStatusId) {
+    	return 'green';
+    } else if ('STORY_IN_PROGRESS' == currentStatusId) {
+    	return 'yellow';
+    } else if ('STORY_COMPLETED' == currentStatusId) {
+    	return 'blue';
+    } else {//STORY_CANCELLED
+    	return 'red';
+    }
+}
+ 
+function treeIconClsConvert(v, record) {
+	var workEffortTypeId = record.get('workEffortTypeId');
+    if ('STORY' == workEffortTypeId) {
+    	var workEffortPurposeTypeId = record.get('workEffortPurposeTypeId');
+    	if ('STORY_TASK' == workEffortPurposeTypeId) {
+    	    return 'task-new';
+    	} else if ('STORY_NEW_FEATURE' == workEffortPurposeTypeId) {
+    	    return 'edit-node';
+    	} else {
+    		return 'bug';
+    	}
+    } else if ('SPRINT' == workEffortTypeId) {
+        return 'view-list-tree-4';
+    } else {
+    	return 'insert-chart-organisation';
+    }
+}
+ 
+function dateConvert(v, record) {
+	if (v != undefined && v.time) {
+		//return((1900 + v.year) + '-0' + (v.month + 1) + '-' + v.date); //2011-05-18
+		//return new Date(1900 + v.year, v.month, v.date)
+		return new Date(v.time);
+	}
+	return ''
+}
+
+function leafConvert(v, record) {
+  if ('STORY' == record.get('workEffortTypeId')) {
+      return true;
+  } else {
+	  return false;
+  }
+}
+
+function hideAndLayout(componentToHide, componentToLayout) {
+    Ext.getCmp(componentToHide).hide();
+    Ext.getCmp(componentToLayout).doLayout();
+}
+
+function showAndLayout(componentToHide, componentToLayout) {
+    Ext.getCmp(componentToHide).show();
+    Ext.getCmp(componentToLayout).doLayout();
+}
+
+function changeStoryStatus(workEffortId, statusId) {
+	Ext.Ajax.request({
+        url: 'changeStoryStatus',
+        params: {
+        	statusId: statusId,
+            workEffortId: workEffortId
+        },
+        success: function(resp, opt) {
+        	return true;
+        },
+        failure: function(resp,opt) {
+        	return false;
+        }
+	}); 
+}
+
+function gotoURL (url){
+	window.location = url;
+}
+
+function refreshPage (){
+	location.reload(true);
+}
+
+var savePrefs = function savePreference (type, name, value){
+	Ext.Ajax.request({
+        url: 'ajaxSetUserPreference',
+        //autoAbort : true,
+        params: {
+        	userPrefGroupTypeId: type,
+            userPrefTypeId: name,
+            userPrefValue: value
+        }
+	}); 
+}
+
+function savePreferenceDefered(type, name, value){
+	Ext.Function.defer(savePrefs, 1000, this, [type, name, value]);
+}
+Ext.define("GenericIdName", {extend: "Ext.data.Model", 
+    fields: ['id', 'name']
+});
+
+Ext.message = function() {
+    var msgCt;
+    function createBox(t, s){
+        return '<div class="msg"><h3>' + t + '</h3><p>' + s + '</p></div>';
+    }
+    function createErrorBox(t, s){
+    	return '<div class="err"><h3>' + t + '</h3><p>' + s + '</p></div>';
+    }
+    
+    return {
+        show : function(title, message, error){
+            if(!msgCt){
+                msgCt = Ext.core.DomHelper.insertFirst(document.body, {id:'msg-div'}, true);
+            }
+            if (error) {
+                var m = Ext.core.DomHelper.append(msgCt, createErrorBox(title, message), true);
+            } else {
+                var m = Ext.core.DomHelper.append(msgCt, createBox(title, message), true);
+            }
+            m.hide();
+            m.slideIn('t').ghost("t", { delay: 3000, remove: true});
+        },
+
+        init : function(){
+        }
+    };
+}();
+
+function showMessage(message){
+    Ext.message.show("MESSAGE", message, false);
+};
+
+function showError(message){
+    Ext.message.show("ERROR", message, true);
+};
+
+function extractErrorMessage(action) {
+	if (action.result._ERROR_MESSAGE_ != undefined) {
+		return action.result._ERROR_MESSAGE_;
+	} else if (action.result._ERROR_MESSAGE_LIST_ != undefined) {
+		return action.result._ERROR_MESSAGE_LIST_;
+		//[1, 2, 3].forEach(function(item) { alert(item) });
+	} else {
+		return "Error processing this action";
+	} 
+}
+
+function extractAndShowError(action){
+	if (action.failureType === 'client') {//action.CLIENT_INVALID
+        return; //client validation will handle it
+    }
+	if (action.failureType === 'load') {//action.LOAD_FAILURE
+		alert('load feilure');
+        return; 
+    }
+	if (action.failureType === 'connect') {//action.CONNECT_FAILURE
+		showError('Error connecting to the server: Status:' + action.response.status + ': ' + action.response.statusText);
+		return;
+	}
+    if (action.failureType === 'server'){//action.SERVER_INVALID server responded with success = false
+    	var message = extractErrorMessage(action);
+    	showError(message);
+    }
+};

@@ -1,0 +1,76 @@
+
+Ext.define('TodoBrowser.PersonForm', {
+    extend: 'Ext.form.Panel',
+    alias: 'widget.personForm',
+    id : 'personForm',
+    width: 600,
+    padding : 10,
+    frame:true,
+    border : false,
+    fieldDefaults: {
+        msgTarget: 'side',
+        labelWidth: 100
+    },
+    defaultType: 'textfield',
+    defaults: {
+        anchor: '100%'
+    },
+    
+    items: [{
+        fieldLabel: 'First Name*',
+        name: 'firstName',
+        allowBlank:false
+    },{
+        fieldLabel: 'Middle Name',
+        name: 'middleName'
+    },{
+        fieldLabel: 'Last Name*',
+        name: 'lastName',
+        allowBlank:false
+    }],
+     
+    initComponent: function(){
+	    Ext.apply(this, {
+		url: updatePerson,
+        buttons: [{
+            text: 'Save',
+            scope: this,
+            handler: function() {
+            	Ext.getCmp('personForm').getForm().submit({
+            		clientValidation: true,
+            		url: this.url,
+                    waitMsg: 'Submitting your data...',
+          		    success: function(form, action){
+          		    	showMessage("Profile updated successfully");
+        		    },
+        		    failure: function(form, action){
+        		    	extractAndShowError(action);
+        		    }
+        		});
+            }
+        },{
+            text: 'Cancel',
+        	handler: function(){
+        		Ext.getCmp('personForm').loadPerson();
+      	   }
+        }],
+      });
+	    this.callParent(arguments);
+      },
+      
+      loadPerson: function() {
+        var projectDetailed = Ext.ModelManager.getModel('TodoBrowser.PersonDetailed');
+        projectDetailed.load('foo', {
+            scope: this,
+            failure: function(record, operation) {
+            	showError("Error loading data.");
+            },
+            success: function(record, operation) {
+                this.getForm().loadRecord(record);
+            }
+        });
+      }
+});
+
+
+

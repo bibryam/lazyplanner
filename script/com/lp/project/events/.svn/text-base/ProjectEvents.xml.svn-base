@@ -1,0 +1,368 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+
+<simple-methods xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:noNamespaceSchemaLocation="http://ofbiz.apache.org/dtds/simple-methods.xsd">
+ 
+    <simple-method method-name="createProject" short-description="Create project">
+        <session-to-field field="workspaceId"/>
+        <set-service-fields service-name="createWorkEffortAndPartyAssign" to-map="createWorkEffortAndPartyAssignMap" map="parameters"/>
+        <set field="createWorkEffortAndPartyAssignMap.workEffortTypeId" value="PROJECT"/>
+        <set field="createWorkEffortAndPartyAssignMap.workEffortPurposeTypeId" value="TODO_PROJECT"/>
+        <set field="createWorkEffortAndPartyAssignMap.currentStatusId" value="PRJ_ACTIVE"/>
+        <set field="createWorkEffortAndPartyAssignMap.workEffortParentId" from-field="workspaceId"/>
+
+        <set field="createWorkEffortAndPartyAssignMap.partyId" from-field="userLogin.partyId"/>
+        <set field="createWorkEffortAndPartyAssignMap.roleTypeId" value="PROJECT_OWNER"/>
+        <set field="createWorkEffortAndPartyAssignMap.statusId" value="PRJ_ACTIVE"/>
+        <call-service service-name="createWorkEffortAndPartyAssign" in-map-name="createWorkEffortAndPartyAssignMap">
+            <result-to-field result-name="workEffortId"/>
+        </call-service>            
+        <check-errors/>
+        
+        <!-- pref group type for this project -->
+        <set field="userPrefGroupTypeIdMap.userPrefGroupTypeId" from-field="workEffortId"/>
+        <set field="userPrefGroupTypeIdMap.description" value="A project preference"/>
+        <make-value value-field="userPrefGroupType" entity-name="UserPrefGroupType" map="userPrefGroupTypeIdMap"/>
+        <create-value value-field="userPrefGroupType"/>
+        <check-errors/>
+        
+        <!-- backlog for this project -->
+        <set field="createWorkEffortMap.workEffortName" value="Backlog"/>
+        <set field="createWorkEffortMap.workEffortTypeId" value="SPRINT"/>
+        <set field="createWorkEffortMap.currentStatusId" value="STORY_CREATED"/>   
+        <set field="createWorkEffortMap.workEffortPurposeTypeId" value="BACKLOG"/>   
+        <set field="createWorkEffortMap.projectId" from-field="workEffortId"/>
+        <call-service service-name="createWorkEffort" in-map-name="createWorkEffortMap"/>
+        <check-errors/>
+        
+        <!-- default user for the project -->
+        <now-timestamp field="now"/>
+        <make-value value-field="newWorkEffortPartyAssignment" entity-name="WorkEffortPartyAssignment"/>
+        <set field="newWorkEffortPartyAssignment.workEffortId" from-field="workEffortId"/>
+        <set field="newWorkEffortPartyAssignment.partyId" value="DEFAULT_USER"/>
+        <set field="newWorkEffortPartyAssignment.roleTypeId" value="PROJECT_MEMBER"/>
+        <set field="newWorkEffortPartyAssignment.fromDate" from-field="now"/>
+        <set field="newWorkEffortPartyAssignment.statusId" value="PRJ_ACTIVE"/>
+        <create-value value-field="newWorkEffortPartyAssignment"/>
+        <check-errors/>
+        
+        <entity-one value-field="workEffort" entity-name="WorkEffort">
+            <select-field field-name="workEffortName"/>
+            <select-field field-name="description"/>
+            <select-field field-name="estimatedCompletionDate"/>
+        </entity-one>
+        <field-to-request field="workEffort"/>
+        
+        <!-- add enum type for project component 
+        <make-value value-field="enumerationType" entity-name="EnumerationType"/>
+        <sequenced-id sequence-name="EnumerationType" field="enumerationType.enumTypeId"/>
+        <set field="enumerationType.description" value="Comp for project: ${workEffortId}"/>
+        
+        <make-value value-field="workEffortAttribute" entity-name="WorkEffortAttribute"/>
+        <set field="workEffortAttribute.workEffortId" from-field="workEffortId"/>
+        <set field="workEffortAttribute.attrName" value="RPOJECT_COMP_TYPE"/>
+        <set field="workEffortAttribute.attrValue" from-field="enumerationType.enumTypeId"/>
+         
+         <field-to-list list="toStore" field="enumerationType"/>       
+         <field-to-list list="toStore" field="workEffortAttribute"/>       
+         <store-list list="toStore"/>
+         <check-errors/>-->
+        
+        <set field="success" value="true"/>
+        <field-to-request field="success"/>
+    </simple-method>    
+
+    <simple-method method-name="updateProject" short-description="Update a project">
+        <session-to-field field="workspaceId"/>
+        <set field="projectId" from-field="parameters.workEffortId"/>
+        <call-simple-method method-name="findWorkspaceProject" xml-resource="component://lazybox/script/com/lp/project/events/CommonHelper.xml"/>
+        <if-empty field="workspaceProject">
+            <return response-code="error"/>
+        </if-empty>
+
+        <set-service-fields service-name="updateWorkEffort" to-map="updateWorkEffortMap" map="parameters"/>
+        <call-service service-name="updateWorkEffort" in-map-name="updateWorkEffortMap"/>
+        <check-errors/>
+        
+        <entity-one value-field="workEffort" entity-name="WorkEffort">
+            <select-field field-name="workEffortName"/>
+            <select-field field-name="description"/>
+            <select-field field-name="estimatedCompletionDate"/>
+        </entity-one>
+        <field-to-request field="workEffort"/>
+    
+        <set field="success" value="true"/>
+        <field-to-request field="success"/>
+    </simple-method>
+  
+    <simple-method method-name="setProjectAsPrefAndSession" short-description="Sets a project as user last project">
+        <if-not-empty field="parameters.projectId">
+            <session-to-field field="workspaceId"/>
+            <set field="projectId" from-field="parameters.projectId"/>
+            <call-simple-method method-name="findWorkspaceProject" xml-resource="component://lazybox/script/com/lp/project/events/CommonHelper.xml"/>
+            
+            <if-empty field="workspaceProject">
+                <!-- check for assigned project -->
+                <entity-condition list="assignedProjects" entity-name="WorkEffortAndPartyAssign" filter-by-date="true">
+                    <condition-list>
+                        <condition-expr field-name="roleTypeId" value="PROJECT_MEMBER"/>
+                        <condition-expr field-name="partyId" from-field="userLogin.partyId"/>
+                        <condition-expr field-name="workEffortId" from-field="projectId"/>
+                    </condition-list>
+                </entity-condition>  
+                <if-not-empty field="assignedProjects">
+                    <first-from-list entry="workspaceProject" list="assignedProjects"/>
+                </if-not-empty>
+            </if-empty>
+            
+            <if-not-empty field="workspaceProject">
+                <set field="setUserPreferenceMap.userPrefGroupTypeId" value="WORKSPACE_PREFS"/>
+                <set field="setUserPreferenceMap.userPrefTypeId" value="LAST_PROJECTID"/>
+                <set field="setUserPreferenceMap.userPrefValue" from-field="parameters.projectId"/>
+                <call-service service-name="setUserPreference" in-map-name="setUserPreferenceMap"/>    
+                <set field="currentProjectId" from-field="parameters.projectId"/>
+                <field-to-session field="currentProjectId"/>
+                <return response-code="projectSet"/>
+            </if-not-empty>
+        </if-not-empty>
+    </simple-method> 
+  
+    <simple-method method-name="loadProject" short-description="Loads a project">
+        <session-to-field field="workspaceId"/>
+        <if-not-empty field="parameters.id">
+            <entity-one value-field="workEffort" entity-name="WorkEffort">
+                <field-map field-name="workEffortId" from-field="parameters.id"/>
+                <select-field field-name="workEffortName"/>
+                <select-field field-name="description"/>
+                <select-field field-name="estimatedCompletionDate"/>
+                <select-field field-name="workEffortTypeId"/><!-- needed for next line -->
+                <select-field field-name="workEffortParentId"/><!-- needed for next line -->
+            </entity-one>
+            <if-compare-field operator="equals" field="workspaceId" to-field="workEffort.workEffortParentId">
+                <if-compare operator="equals" value="PROJECT" field="workEffort.workEffortTypeId">
+                    <field-to-request field="workEffort"/>                                
+                </if-compare>
+                
+                <!-- assigned projects -->
+                <else>
+                     <entity-condition list="assignedProjects" entity-name="WorkEffortAndPartyAssign" filter-by-date="true">
+                        <condition-list>
+                            <condition-expr field-name="partyId" from-field="userLogin.partyId"/>
+                            <condition-expr field-name="workEffortId" from-field="parameters.id"/>
+                        </condition-list>
+                        <select-field field-name="workEffortName"/>
+                        <select-field field-name="description"/>
+                        <select-field field-name="estimatedCompletionDate"/>
+                        <select-field field-name="workEffortTypeId"/><!-- needed for next line -->
+                    </entity-condition>  
+                    <if-not-empty field="assignedProjects">
+                        <first-from-list entry="workEffort" list="assignedProjects"/>
+                        <if-compare operator="equals" value="PROJECT" field="workEffort.workEffortTypeId">
+                            <field-to-request field="workEffort"/>                                
+                        </if-compare>
+                    </if-not-empty>
+                </else>
+            </if-compare-field>
+        </if-not-empty>
+    </simple-method>   
+
+    <simple-method method-name="findUserAssigments" short-description="Finds active and future user project assgiments">
+        <set field="partyId" from-field="parameters.partyId"/>
+        
+        <if-not-empty field="partyId">
+            <!-- validate that user belongs to workspace -->
+            <session-to-field field="workspaceId"/>
+            <entity-and list="workEffortPartyAssignments" entity-name="WorkEffortPartyAssignment" filter-by-date="true">
+                <field-map field-name="partyId" from-field="partyId"/>
+                <field-map field-name="workEffortId" from-field="workspaceId"/>
+                <field-map field-name="roleTypeId" value="WORKSPACE_MEMBER"/>                
+            </entity-and>
+            <if-not-empty field="workEffortPartyAssignments">
+                <now-timestamp field="now"/>
+                <entity-condition list="userAssigments" entity-name="WorkEffortPartyAssignmentDetails">
+                    <condition-list>
+                        <condition-expr field-name="workEffortParentId" from-field="workspaceId"/>
+                        <condition-expr field-name="partyId" from-field="partyId"/>
+                        <condition-expr field-name="workEffortTypeId" value="PROJECT"/>
+                        <condition-expr field-name="roleTypeId" value="PROJECT_MEMBER"/>
+                        <condition-list combine="or">
+                            <condition-expr field-name="thruDate" operator="greater-equals" from-field="now"/>
+                            <condition-expr field-name="thruDate" operator="equals" from-field="nullField"/>
+                        </condition-list>
+                    </condition-list>
+                    <select-field field-name="partyId"/>
+                    <select-field field-name="workEffortId"/>
+                    <select-field field-name="workEffortName"/>                
+                    <select-field field-name="workEffortTypeId"/>
+                    <select-field field-name="fromDate"/>
+                    <select-field field-name="thruDate"/>
+                    <select-field field-name="roleTypeId"/>
+                    <select-field field-name="rt_Description"/>                
+                </entity-condition>
+                <field-to-request field="userAssigments"/>                                
+            </if-not-empty>
+        </if-not-empty>
+    </simple-method>         
+
+    <simple-method method-name="sessionTimeOut" short-description="Set a market to indicate user session is over" login-required="false">
+        <log level="always" message="User session time out"/>
+        <set field="success" value="false" type="Boolean"/>
+        <field-to-request field="success"/>      
+        
+        <set field="_ERROR_CODE_" value="SESSION_TIMEOUT"/>
+        <set field="_ERROR_MESSAGE_" value="You are logged out. Login again."/>
+        <field-to-request field="_ERROR_MESSAGE_"/>      
+
+        <return response-code="error"/>
+    </simple-method>         
+
+    <simple-method method-name="createUserAssigment" short-description="Assign a user to a project">
+        <set field="paramsToValidate[]" value="partyId"/>
+        <set field="paramsToValidate[]" value="workEffortId"/>
+        <call-simple-method method-name="validateParameters" xml-resource="component://lazybox/script/com/lp/project/events/CommonHelper.xml"/>
+      
+        <set field="partyId" from-field="parameters.partyId"/>
+        <call-simple-method method-name="validateWorkspaceMember" xml-resource="component://lazybox/script/com/lp/project/events/CommonHelper.xml"/>
+
+        <session-to-field field="workspaceId"/>
+        <set field="projectId" from-field="parameters.workEffortId"/>
+        <call-simple-method method-name="findWorkspaceProject" xml-resource="component://lazybox/script/com/lp/project/events/CommonHelper.xml"/>
+        <if-empty field="workspaceProject">
+            <return response-code="error"/>
+        </if-empty>
+        
+        <!-- check for existing assigments -->
+        <entity-and entity-name="WorkEffortPartyAssignment" list="currentAssignments" filter-by-date="true">
+            <field-map field-name="workEffortId" from-field="parameters.workEffortId"/>
+            <field-map field-name="partyId" from-field="parameters.partyId"/>
+            <field-map field-name="roleTypeId" value="PROJECT_MEMBER"/>
+        </entity-and>
+        <if-not-empty field="currentAssignments">
+            <add-error error-list-name="_error_message_list_"><fail-property resource="LazyPlannerUiLabels" property="LPPartyAssignmentError"/></add-error>
+            <return response-code="error"/>
+        </if-not-empty>
+        
+        <now-timestamp field="now"/>
+        <make-value value-field="newWorkEffortPartyAssignment" entity-name="WorkEffortPartyAssignment"/>
+        <set field="newWorkEffortPartyAssignment.workEffortId" from-field="parameters.workEffortId"/>
+        <set field="newWorkEffortPartyAssignment.partyId" from-field="parameters.partyId"/>
+        <set field="newWorkEffortPartyAssignment.roleTypeId" value="PROJECT_MEMBER"/>
+        <set field="newWorkEffortPartyAssignment.fromDate" from-field="now"/>
+        <set field="newWorkEffortPartyAssignment.statusId" value="PRTYASGN_ASSIGNED"/>
+        <create-value value-field="newWorkEffortPartyAssignment"/>
+        <check-errors/>
+        
+        <set field="success" value="true"/>
+        <field-to-request field="success"/>      
+    </simple-method>    
+    
+     <simple-method method-name="deleteUserAssigment" short-description="Expire a user assignment to a project">
+        <set field="paramsToValidate[]" value="partyId"/>
+        <set field="paramsToValidate[]" value="fromDate"/>
+        <set field="paramsToValidate[]" value="workEffortId"/>
+        <call-simple-method method-name="validateParameters" xml-resource="component://lazybox/script/com/lp/project/events/CommonHelper.xml"/>
+
+        <set field="partyId" from-field="parameters.partyId"/>
+        <call-simple-method method-name="validateWorkspaceMember" xml-resource="component://lazybox/script/com/lp/project/events/CommonHelper.xml"/>
+
+        <session-to-field field="workspaceId"/>
+        <set field="projectId" from-field="parameters.workEffortId"/>
+        <call-simple-method method-name="findWorkspaceProject" xml-resource="component://lazybox/script/com/lp/project/events/CommonHelper.xml"/>
+        <if-empty field="workspaceProject">
+            <return response-code="error"/>
+        </if-empty>
+        
+        <set field="fromDateLong" from-field="parameters.fromDate" type="Long"/>
+        <create-object class-name="java.sql.Timestamp" field="fromDateDate">
+             <field field="fromDateLong" type="long"/>
+        </create-object>
+        
+        <set field="deletePartyToWorkEffortAssignmentMap.workEffortId" from-field="parameters.workEffortId"/>
+        <set field="deletePartyToWorkEffortAssignmentMap.partyId" from-field="parameters.partyId"/>
+        <set field="deletePartyToWorkEffortAssignmentMap.roleTypeId" value="PROJECT_MEMBER"/>
+        <set field="deletePartyToWorkEffortAssignmentMap.fromDate" from-field="fromDateDate" type="Timestamp"/>
+        <call-service service-name="deletePartyToWorkEffortAssignment" in-map-name="deletePartyToWorkEffortAssignmentMap"/>
+        <check-errors/>
+        
+        <set field="success" value="true"/>
+        <field-to-request field="success"/>      
+    </simple-method>      
+
+    <simple-method method-name="assignWorkspaceUser" short-description="Assign a user to workspace">
+        <set field="paramsToValidate[]" value="userLoginId"/>
+        <call-simple-method method-name="validateParameters" xml-resource="component://lazybox/script/com/lp/project/events/CommonHelper.xml"/>
+      
+        <entity-one value-field="partyUserLogin" entity-name="UserLogin"/>
+        <if>
+            <condition>
+                <or>
+                    <if-compare operator="equals" field="partyUserLogin.userLoginId" value="system"/>
+                    <if-compare operator="equals" field="partyUserLogin.userLoginId" value="anonymous"/>
+                    <if-compare operator="equals" field="partyUserLogin.userLoginId" value="thegod"/>
+                </or>
+            </condition>
+            <then>
+                <clear-field field="partyUserLogin"/>
+            </then>        
+        </if>
+        <if-empty field="partyUserLogin">
+            <add-error><fail-message message="User with name: ${parameters.userLoginId} not found"/></add-error>
+        <check-errors/>
+        </if-empty>
+        
+        <if-compare-field operator="equals" field="parameters.userLoginId" to-field="userLogin.userLoginId">
+            <add-error><fail-message message="You cannot add the owner of this account as a member"/></add-error>
+            <check-errors/>
+        </if-compare-field>
+        
+        <!-- check for existing membership -->        
+        <session-to-field field="workspaceId"/>
+        <entity-and entity-name="WorkEffortPartyAssignment" list="currentAssignments" filter-by-date="true">
+            <field-map field-name="workEffortId" from-field="workspaceId"/>
+            <field-map field-name="partyId" from-field="partyUserLogin.partyId"/>
+            <field-map field-name="roleTypeId" value="WORKSPACE_MEMBER"/>
+        </entity-and>
+        <if-not-empty field="currentAssignments">
+            <first-from-list entry="firstAssignment" list="currentAssignments"/>
+            <add-error>
+                <fail-message message="User ${userLoginId} is already a member of this account"/>
+            </add-error>
+        </if-not-empty>
+        <check-errors/>
+        
+        <set field="assignPartyToWorkEffortMap.workEffortId" from-field="workspaceId"/>
+        <set field="assignPartyToWorkEffortMap.partyId" from-field="partyUserLogin.partyId"/>
+        <set field="assignPartyToWorkEffortMap.roleTypeId" value="WORKSPACE_MEMBER"/>
+        <set field="assignPartyToWorkEffortMap.statusId" value="PRJ_ACTIVE"/>            
+        <call-service service-name="assignPartyToWorkEffort" in-map-name="assignPartyToWorkEffortMap"/>
+        <check-errors/>
+        
+        <entity-one value-field="person" entity-name="Person">
+            <field-map field-name="partyId" from-field="partyUserLogin.partyId"/>
+            <select-field field-name="firstName"/>
+            <select-field field-name="lastName"/>
+        </entity-one>
+        <field-to-request field="person"/>
+        
+        <set field="success" value="true"/>
+        <field-to-request field="success"/>      
+    </simple-method>         
+</simple-methods>
