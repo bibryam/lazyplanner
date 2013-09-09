@@ -2,9 +2,9 @@ LazyPlanner - task management application for lazy people
 
 Based on Apache OFBiz and Sencha ExtJS 4
 
-LIVE DEMO - http://lazyplanner.ofbizian.com/
+[LIVE DEMO](http://lazyplanner.ofbizian.com/)
 
-Screenshot - http://3.bp.blogspot.com/-RfNouR8-B8o/Ui5J3cHxmMI/AAAAAAAAAQw/LjpGtjFwBIU/s1600/Screen+Shot+2013-09-09+at+22.22.46.png
+[Screenshot](http://3.bp.blogspot.com/-RfNouR8-B8o/Ui5J3cHxmMI/AAAAAAAAAQw/LjpGtjFwBIU/s1600/Screen+Shot+2013-09-09+at+22.22.46.png)
 
 License: LGPL 2.1
 
