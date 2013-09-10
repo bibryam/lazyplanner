@@ -5,6 +5,8 @@
 
 [Screenshot](http://3.bp.blogspot.com/-RfNouR8-B8o/Ui5J3cHxmMI/AAAAAAAAAQw/LjpGtjFwBIU/s1600/Screen+Shot+2013-09-09+at+22.22.46.png)
 
+[Blog](http://www.ofbizian.com/2013/09/an-old-pet-project-based-on-sencha-ext.html)
+
 License: LGPL 2.1
 
 Installation:  
