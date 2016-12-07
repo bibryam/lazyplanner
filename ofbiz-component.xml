@@ -33,7 +33,21 @@ along with this software.  If not, see http://www.fsf.org
         menu-name="secondary"
         server="default-server"
         location="webapp/lazyplanner"
-        mount-point="/"
+        mount-point="/lazyplanner"
         app-bar-display="false"
         base-permission="WORKEFFORTMGR"/>
+        
+     <webapp name="lazyplanner-app"
+        title="lazyplanner-app"
+        server="default-server"
+        location="webapp/lazyplanner/app"
+        mount-point="/app"
+        app-bar-display="false"/>
+     
+     <webapp name="lazyplanner-ext"
+        title="lazyplanner-ext"
+        server="default-server"
+        location="webapp/lazyplanner/ext-4.0.0"
+        mount-point="/ext-4.0.0"
+        app-bar-display="false"/>
 </ofbiz-component>
